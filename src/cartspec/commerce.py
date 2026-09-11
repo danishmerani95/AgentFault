@@ -154,3 +154,8 @@ class CommerceEnvironment:
         cart.items.clear()
 
         return orders
+
+    def get_offers_for_product(self, product_id: str) -> list[Offer]:
+        return [
+            offer for offer in self.offers.values() if offer.product_id == product_id
+        ]

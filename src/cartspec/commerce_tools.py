@@ -12,6 +12,11 @@ def create_commerce_tools(
             function=environment.search_products,
         ),
         Tool(
+            name="get_offers_for_product",
+            description="Get available offers for a product.",
+            function=environment.get_offers_for_product,
+        ),
+        Tool(
             name="get_offer",
             description="Get the details and current price of a product offer.",
             function=environment.get_offer,
