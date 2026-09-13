@@ -2,6 +2,7 @@ from typing import Any
 
 from cartspec.agent import Agent
 from cartspec.tool import ToolRegistry
+from cartspec.trajectory import TrajectoryStep
 
 
 class AgentRunner:
@@ -12,6 +13,7 @@ class AgentRunner:
     ) -> None:
         self.agent = agent
         self.tool_registry = tool_registry
+        self.trajectory: list[TrajectoryStep] = []
 
     def run(self) -> Any:
         observation: Any = None
@@ -23,3 +25,10 @@ class AgentRunner:
                 return observation
 
             observation = self.tool_registry.execute(tool_call)
+
+            self.trajectory.append(
+                TrajectoryStep(
+                    tool_call=tool_call,
+                    observation=observation,
+                )
+            )
