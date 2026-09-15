@@ -1,5 +1,7 @@
 from typing import Any
 
+from pydantic import BaseModel
+
 from cartspec.agent import Agent
 from cartspec.tool import ToolRegistry
 from cartspec.trajectory import TrajectoryStep
@@ -26,9 +28,15 @@ class AgentRunner:
 
             observation = self.tool_registry.execute(tool_call)
 
+            snapshot = (
+                observation.model_copy(deep=True)
+                if isinstance(observation, BaseModel)
+                else observation
+            )
+
             self.trajectory.append(
                 TrajectoryStep(
                     tool_call=tool_call,
-                    observation=observation,
+                    observation=snapshot,
                 )
             )

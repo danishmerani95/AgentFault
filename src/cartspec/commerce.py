@@ -1,22 +1,20 @@
-from dataclasses import dataclass
 from uuid import uuid4
 
+from pydantic import BaseModel
 
-@dataclass
-class Product:
+
+class Product(BaseModel):
     id: str
     name: str
     category: str
 
 
-@dataclass
-class Merchant:
+class Merchant(BaseModel):
     id: str
     name: str
 
 
-@dataclass
-class Offer:
+class Offer(BaseModel):
     id: str
     product_id: str
     merchant_id: str
@@ -24,26 +22,22 @@ class Offer:
     currency: str
 
 
-@dataclass
-class Inventory:
+class Inventory(BaseModel):
     offer_id: str
     quantity: int
 
 
-@dataclass
-class CartItem:
+class CartItem(BaseModel):
     offer_id: str
     quantity: int
 
 
-@dataclass
-class Cart:
+class Cart(BaseModel):
     id: str
     items: list[CartItem]
 
 
-@dataclass
-class Order:
+class Order(BaseModel):
     id: str
     offer_id: str
     quantity: int
