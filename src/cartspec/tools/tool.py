@@ -58,3 +58,12 @@ class ToolCall:
     name: str
     arguments: dict[str, Any]
     id: str | None = None
+
+
+def __getattr__(name: str) -> Any:
+    if name == "ToolRegistry":
+        from cartspec.tools.registry import ToolRegistry
+
+        return ToolRegistry
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
