@@ -1,6 +1,5 @@
+from cartspec.tools.tool import Tool
 from openai.types.chat import ChatCompletionToolParam
-
-from cartspec.tool import Tool
 
 
 def to_openai_tool(tool: Tool) -> ChatCompletionToolParam:

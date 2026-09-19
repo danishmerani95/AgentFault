@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from cartspec.tool import ToolCall
+from cartspec.tools.tool import ToolCall
 
 
 @dataclass

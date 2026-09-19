@@ -1,4 +1,4 @@
-from cartspec.tool import Tool
+from cartspec.tools.tool import Tool
 
 
 def add_to_cart(

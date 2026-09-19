@@ -1,5 +1,5 @@
 from cartspec.commerce import CommerceEnvironment
-from cartspec.tool import Tool
+from cartspec.tools.tool import Tool
 
 
 def create_commerce_tools(

@@ -1,6 +1,7 @@
+from cartspec.commerce.tools import create_commerce_tools
+from cartspec.tools.tool import ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
-from cartspec.commerce_tools import create_commerce_tools
-from cartspec.tool import ToolCall, ToolRegistry
+
 
 def test_tool_call_execution() -> None:
     world = create_basic_world()

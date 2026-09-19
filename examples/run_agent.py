@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 
-from cartspec.commerce_tools import create_commerce_tools
-from cartspec.openai_agent import OpenAICommerceAgent
-from cartspec.openai_tools import to_openai_tools
-from cartspec.runner import AgentRunner
-from cartspec.tool import ToolRegistry
+from cartspec.commerce.tools import create_commerce_tools
+from cartspec.integrations.openai.agent import OpenAICommerceAgent
+from cartspec.integrations.openai.tools import to_openai_tools
+from cartspec.testing.runner import AgentRunner
+from cartspec.tools.tool import ToolRegistry
 from examples.basic_world import create_basic_world
 
 load_dotenv()

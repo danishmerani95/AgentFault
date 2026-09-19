@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from cartspec.tool import ToolCall
+from cartspec.tools.tool import ToolCall
 
 
 class Agent(ABC):

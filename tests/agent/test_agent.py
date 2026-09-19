@@ -1,7 +1,7 @@
-from cartspec.commerce_tools import create_commerce_tools
-from cartspec.deterministic_agent import DeterministicCommerceAgent
-from cartspec.runner import AgentRunner
-from cartspec.tool import ToolRegistry
+from cartspec.agent import DeterministicCommerceAgent
+from cartspec.commerce.tools import create_commerce_tools
+from cartspec.testing.runner import AgentRunner
+from cartspec.tools.tool import ToolRegistry
 from examples.basic_world import create_basic_world
 
 

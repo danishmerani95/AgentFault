@@ -2,6 +2,10 @@ import json
 import os
 from typing import Any
 
+from pydantic import BaseModel
+
+from cartspec.agent import Agent
+from cartspec.tools.tool import ToolCall
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
@@ -12,9 +16,6 @@ from openai.types.chat import (
     ChatCompletionToolParam,
     ChatCompletionUserMessageParam,
 )
-
-from cartspec.agent import Agent
-from cartspec.tool import ToolCall
 
 
 class OpenAICommerceAgent(Agent):
@@ -51,9 +52,16 @@ class OpenAICommerceAgent(Agent):
 
     def next_action(self, observation: Any) -> ToolCall | None:
         def _serialize_observation(observation: Any) -> str:
+            if isinstance(observation, BaseModel):
+                return observation.model_dump_json()
             if isinstance(observation, list):
-                return json.dumps([item.model_dump() for item in observation])
-            return observation.model_dump_json()
+                return json.dumps(
+                    [
+                        item.model_dump() if isinstance(item, BaseModel) else item
+                        for item in observation
+                    ]
+                )
+            return json.dumps(observation)
 
         if observation is not None:
             if self.previous_tool_call_id is None:

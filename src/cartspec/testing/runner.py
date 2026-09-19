@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from cartspec.agent import Agent
-from cartspec.tool import ToolRegistry
+from cartspec.tools.tool import ToolRegistry
 from cartspec.trajectory import TrajectoryStep
 
 
