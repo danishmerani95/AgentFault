@@ -7,6 +7,7 @@ from cartspec.trajectory import TrajectoryStep
 
 ToolExecutionHook = Callable[[ToolCall, Any], None]
 BeforeToolCallExecutionHook = Callable[[ToolCall], None]
+ToolErrorHook = Callable[[ToolCall, Exception], None]
 
 
 class AgentRunner:
@@ -16,12 +17,14 @@ class AgentRunner:
         tool_registry: ToolRegistry,
         before_tool_execution: BeforeToolCallExecutionHook | None = None,
         on_tool_executed: ToolExecutionHook | None = None,
+        on_tool_error: ToolErrorHook | None = None,
     ) -> None:
         self.agent = agent
         self.tool_registry = tool_registry
         self.trajectory: list[TrajectoryStep] = []
         self.before_tool_execution = before_tool_execution
         self.on_tool_executed = on_tool_executed
+        self.on_tool_error = on_tool_error
 
     def run(self) -> Any:
         observation: Any = None
@@ -35,7 +38,12 @@ class AgentRunner:
             if self.before_tool_execution is not None:
                 self.before_tool_execution(tool_call)
 
-            observation = self.tool_registry.execute(tool_call)
+            try:
+                observation = self.tool_registry.execute(tool_call)
+            except Exception as error:
+                if self.on_tool_error is not None:
+                    self.on_tool_error(tool_call, error)
+                return
 
             snapshot = deepcopy(observation)
 

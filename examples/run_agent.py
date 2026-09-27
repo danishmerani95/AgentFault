@@ -4,7 +4,7 @@ from cartspec.commerce.tools import create_commerce_tools
 from cartspec.integrations.openai.agent import OpenAICommerceAgent
 from cartspec.integrations.openai.tools import to_openai_tools
 from cartspec.testing.runner import AgentRunner
-from cartspec.tools.tool import ToolRegistry
+from cartspec.tools import ToolRegistry
 from examples.basic_world import create_basic_world
 
 load_dotenv()

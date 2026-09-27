@@ -1,7 +1,7 @@
 from cartspec.agent import DeterministicCommerceAgent, NaiveCommerceAgent
 from cartspec.commerce.tools import create_commerce_tools
 from cartspec.testing.assertions.budget import MaxPriceAssertion
-from cartspec.testing.mutations import PriceMutation
+from cartspec.testing.mutations import InventoryMutation, PriceMutation
 from cartspec.testing.test_case import TestCase
 from cartspec.testing.test_runner import TestRunner
 from cartspec.testing.triggers import ToolTrigger
@@ -104,4 +104,37 @@ def test_naive_agent_violates_budget_after_price_mutation() -> None:
     )
 
     result = runner.run(test_case)
+    assert result.passed is False
+
+
+def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
+    world = create_basic_world()
+
+    tools = create_commerce_tools(world)
+    registry = ToolRegistry(tools)
+
+    agent = NaiveCommerceAgent(query="headphones")
+
+    test_case = TestCase(
+        name="quantity_constraint",
+        assertions=[],
+        triggers=[
+            ToolTrigger(
+                tool_name="get_offers_for_product",
+                mutation=InventoryMutation(
+                    offer_id="offer_sony_1",
+                    new_quantity=0,
+                ),
+            ),
+        ],
+    )
+
+    runner = TestRunner(
+        agent=agent,
+        tool_registry=registry,
+        environment=world,
+    )
+
+    result = runner.run(test_case)
+    print(result.trajectory)
     assert result.passed is False

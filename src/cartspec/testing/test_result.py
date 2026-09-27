@@ -11,3 +11,4 @@ class TestResult:
     passed: bool
     assertions: list[AssertionResult]
     trajectory: list[TrajectoryStep]
+    error: Exception | None = None

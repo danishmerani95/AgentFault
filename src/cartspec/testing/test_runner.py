@@ -10,6 +10,7 @@ from cartspec.tools.tool import ToolCall, ToolRegistry
 
 class TestRunner:
     __test__ = False
+    execution_error: Exception | None = None
 
     def __init__(
         self,
@@ -30,6 +31,7 @@ class TestRunner:
             on_tool_executed=lambda tool_call, _: self._on_tool_executed(
                 test_case, tool_call
             ),
+            on_tool_error=self._on_tool_error,
         )
 
         result = agent_runner.run()
@@ -42,12 +44,15 @@ class TestRunner:
             for assertion in test_case.assertions
         ]
 
-        passed = all(assertion_result.passed for assertion_result in assertion_results)
+        passed = self.execution_error is None and all(
+            assertion_result.passed for assertion_result in assertion_results
+        )
 
         return TestResult(
             passed=passed,
             assertions=assertion_results,
             trajectory=agent_runner.trajectory,
+            error=self.execution_error,
         )
 
     def _before_tool_executed(self, _: ToolCall) -> None:
@@ -60,3 +65,6 @@ class TestRunner:
         for trigger in test_case.triggers:
             if trigger.tool_name == tool_call.name:
                 self.pending_mutations.append(trigger.mutation)
+
+    def _on_tool_error(self, tool_call: ToolCall, error: Exception) -> None:
+        self.execution_error = error

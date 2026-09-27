@@ -1,10 +1,11 @@
 from typing import Any
 
-from cartspec.agent.deterministic import DeterministicCommerceAgent
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.testing.runner import AgentRunner
-from cartspec.tools.tool import ToolCall, ToolRegistry
+from cartspec.agent import DeterministicCommerceAgent
+from cartspec.commerce import create_commerce_tools
+from cartspec.testing import AgentRunner, TestCase, TestRunner
+from cartspec.tools import Tool, ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
+from tests.testing.triggers.mocks import FailingAgent
 
 
 def test_runner_preserves_observation_snapshot() -> None:
@@ -95,3 +96,80 @@ def test_hook_order_is_correct() -> None:
 
     assert events[0] == "before:search_products"
     assert events[1] == "after:search_products"
+
+
+def _failing_tool() -> None:
+    raise ValueError("Not enough inventory.")
+
+
+def test_test_runner_handles_tool_error() -> None:
+    agent = FailingAgent()
+
+    tool = Tool(
+        name="failing_tool",
+        description="A tool that always fails.",
+        function=_failing_tool,
+    )
+
+    tool_registry = ToolRegistry([tool])
+    _ = create_basic_world()
+
+    captured_tool_call: ToolCall | None = None
+    captured_error: Exception | None = None
+
+    def on_tool_error(tool_call: ToolCall, error: Exception) -> None:
+        nonlocal captured_tool_call
+        nonlocal captured_error
+
+        captured_tool_call = tool_call
+        captured_error = error
+
+    agent_runner = AgentRunner(
+        agent=agent,
+        tool_registry=tool_registry,
+        on_tool_error=on_tool_error,
+    )
+
+    result = agent_runner.run()
+
+    assert result is None
+    assert captured_tool_call is not None
+    assert captured_tool_call.name == "failing_tool"
+
+    assert captured_error is not None
+    assert isinstance(captured_error, ValueError)
+    assert str(captured_error) == "Not enough inventory."
+
+    assert agent.call_count == 1
+    assert agent_runner.trajectory == []
+
+
+def test_test_runner_fails_when_tool_execution_fails() -> None:
+    agent = FailingAgent()
+
+    environment = create_basic_world()
+    tool = Tool(
+        name="failing_tool",
+        description="A tool that always fails.",
+        function=_failing_tool,
+    )
+
+    tool_registry = ToolRegistry([tool])
+
+    test_runner = TestRunner(
+        agent=agent,
+        tool_registry=tool_registry,
+        environment=environment,
+    )
+
+    test_case = TestCase(name="failing tool test")
+    test_result = test_runner.run(test_case)
+
+    assert test_result.trajectory == []
+    assert test_result.passed is False
+
+    assert test_result.error is not None
+    assert isinstance(test_result.error, ValueError)
+    assert str(test_result.error) == "Not enough inventory."
+
+def test_test_runner_fails_when_tool_() -> None:
