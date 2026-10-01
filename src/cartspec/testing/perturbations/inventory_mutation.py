@@ -1,8 +1,8 @@
 from cartspec.commerce.environment import CommerceEnvironment
-from cartspec.testing.mutations.base import Mutation
+from cartspec.testing.perturbations.base import Perturbation
 
 
-class InventoryMutation(Mutation):
+class InventoryMutation(Perturbation):
     def __init__(self, offer_id: str, new_quantity: int):
         self.offer_id = offer_id
         self.new_quantity = new_quantity

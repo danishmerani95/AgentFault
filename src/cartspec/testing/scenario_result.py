@@ -5,7 +5,7 @@ from cartspec.trajectory import TrajectoryStep
 
 
 @dataclass
-class TestResult:
+class ScenarioResult:
     __test__ = False
 
     passed: bool

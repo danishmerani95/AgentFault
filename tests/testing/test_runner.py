@@ -2,7 +2,7 @@ from typing import Any
 
 from cartspec.agent import DeterministicCommerceAgent
 from cartspec.commerce import create_commerce_tools
-from cartspec.testing import AgentRunner, TestCase, TestRunner
+from cartspec.testing import AgentRunner, Scenario, TestRunner
 from cartspec.tools import Tool, ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
 from tests.testing.triggers.mocks import FailingAgent
@@ -156,14 +156,10 @@ def test_test_runner_fails_when_tool_execution_fails() -> None:
 
     tool_registry = ToolRegistry([tool])
 
-    test_runner = TestRunner(
-        agent=agent,
-        tool_registry=tool_registry,
-        environment=environment,
-    )
+    test_runner = TestRunner(tool_registry=tool_registry)
 
-    test_case = TestCase(name="failing tool test")
-    test_result = test_runner.run(test_case)
+    scenario = Scenario(name="failing tool test", agent=agent, environment=environment)
+    test_result = test_runner.run(scenario)
 
     assert test_result.trajectory == []
     assert test_result.passed is False
@@ -171,5 +167,3 @@ def test_test_runner_fails_when_tool_execution_fails() -> None:
     assert test_result.error is not None
     assert isinstance(test_result.error, ValueError)
     assert str(test_result.error) == "Not enough inventory."
-
-def test_test_runner_fails_when_tool_() -> None:

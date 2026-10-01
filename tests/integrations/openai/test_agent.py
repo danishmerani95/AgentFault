@@ -3,7 +3,7 @@
 # from cartspec.commerce.tools import create_commerce_tools
 # from cartspec.integrations.openai import OpenAICommerceAgent, to_openai_tools
 # from cartspec.testing.assertions.budget import MaxPriceAssertion
-# from cartspec.testing.test_case import TestCase
+# from cartspec.testing.scenario import Scenario
 # from cartspec.testing.test_runner import TestRunner
 # from cartspec.tools.tool import ToolRegistry
 # from examples.basic_world import create_basic_world
@@ -26,7 +26,7 @@
 #         model="gpt-4o-mini",
 #     )
 
-#     test_case = TestCase(
+#     scenario = Scenario(
 #         name="budget_constraint",
 #         assertions=[
 #             MaxPriceAssertion(max_price=150.0),
@@ -35,7 +35,7 @@
 
 #     runner = TestRunner(agent=agent, tool_registry=registry, environment=world)
 
-#     result = runner.run(test_case)
+#     result = runner.run(scenario)
 
 #     assert result.passed is True
 #     assert len(result.assertions) == 1

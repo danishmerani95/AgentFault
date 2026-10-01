@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from cartspec.testing.mutations import Mutation
+from cartspec.testing.perturbations import Perturbation
 
 
 @dataclass
 class ToolTrigger:
     tool_name: str
-    mutation: Mutation
+    perturbation: Perturbation

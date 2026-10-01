@@ -1,8 +1,8 @@
 from cartspec.agent import DeterministicCommerceAgent, NaiveCommerceAgent
 from cartspec.commerce.tools import create_commerce_tools
 from cartspec.testing.assertions.budget import MaxPriceAssertion
-from cartspec.testing.mutations import InventoryMutation, PriceMutation
-from cartspec.testing.test_case import TestCase
+from cartspec.testing.perturbations import InventoryMutation, PriceMutation
+from cartspec.testing.scenario import Scenario
 from cartspec.testing.test_runner import TestRunner
 from cartspec.testing.triggers import ToolTrigger
 from cartspec.tools import ToolRegistry
@@ -20,16 +20,18 @@ def test_budget_constraint_passes() -> None:
         max_price=150.0,
     )
 
-    test_case = TestCase(
+    scenario = Scenario(
         name="budget_constraint",
+        agent=agent,
+        environment=world,
         assertions=[
             MaxPriceAssertion(max_price=150.0),
         ],
     )
 
-    runner = TestRunner(agent=agent, tool_registry=registry, environment=world)
+    runner = TestRunner(tool_registry=registry)
 
-    result = runner.run(test_case)
+    result = runner.run(scenario)
 
     assert result.passed is True
     assert len(result.assertions) == 1
@@ -47,13 +49,15 @@ def test_agent_revalidates_price_after_price_mutation() -> None:
         max_price=150.0,
     )
 
-    test_case = TestCase(
+    scenario = Scenario(
         name="budget_constraint",
+        agent=agent,
+        environment=world,
         assertions=[],
-        triggers=[
+        perturbations=[
             ToolTrigger(
                 tool_name="get_offers_for_product",
-                mutation=PriceMutation(
+                perturbation=PriceMutation(
                     offer_id="offer_sony_1",
                     new_price=179.0,
                 ),
@@ -61,8 +65,8 @@ def test_agent_revalidates_price_after_price_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(agent=agent, tool_registry=registry, environment=world)
-    result = runner.run(test_case)
+    runner = TestRunner(tool_registry=registry)
+    result = runner.run(scenario)
 
     assert result.passed is True
 
@@ -81,15 +85,17 @@ def test_naive_agent_violates_budget_after_price_mutation() -> None:
 
     agent = NaiveCommerceAgent(query="headphones")
 
-    test_case = TestCase(
+    scenario = Scenario(
         name="budget_constraint",
+        agent=agent,
+        environment=world,
         assertions=[
             MaxPriceAssertion(max_price=150.0),
         ],
-        triggers=[
+        perturbations=[
             ToolTrigger(
                 tool_name="get_offers_for_product",
-                mutation=PriceMutation(
+                perturbation=PriceMutation(
                     offer_id="offer_sony_1",
                     new_price=179.0,
                 ),
@@ -97,13 +103,9 @@ def test_naive_agent_violates_budget_after_price_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(
-        agent=agent,
-        tool_registry=registry,
-        environment=world,
-    )
+    runner = TestRunner(tool_registry=registry)
 
-    result = runner.run(test_case)
+    result = runner.run(scenario)
     assert result.passed is False
 
 
@@ -115,13 +117,15 @@ def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
 
     agent = NaiveCommerceAgent(query="headphones")
 
-    test_case = TestCase(
+    scenario = Scenario(
         name="quantity_constraint",
+        agent=agent,
+        environment=world,
         assertions=[],
-        triggers=[
+        perturbations=[
             ToolTrigger(
                 tool_name="get_offers_for_product",
-                mutation=InventoryMutation(
+                perturbation=InventoryMutation(
                     offer_id="offer_sony_1",
                     new_quantity=0,
                 ),
@@ -129,12 +133,8 @@ def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(
-        agent=agent,
-        tool_registry=registry,
-        environment=world,
-    )
+    runner = TestRunner(tool_registry=registry)
 
-    result = runner.run(test_case)
+    result = runner.run(scenario)
     print(result.trajectory)
     assert result.passed is False

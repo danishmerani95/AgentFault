@@ -14,8 +14,9 @@ from cartspec.testing import (
     AgentRunner,
     Assertion,
     AssertionResult,
-    TestCase,
-    TestResult,
+    Perturbation,
+    Scenario,
+    ScenarioResult,
     TestRunner,
 )
 from cartspec.tools import Tool, ToolCall, ToolRegistry
@@ -35,8 +36,9 @@ __all__ = [
     "Offer",
     "Order",
     "Product",
-    "TestCase",
-    "TestResult",
+    "Perturbation",
+    "Scenario",
+    "ScenarioResult",
     "TestRunner",
     "Tool",
     "ToolCall",
