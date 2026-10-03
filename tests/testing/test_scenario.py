@@ -5,30 +5,30 @@ import pytest
 
 import cartspec.testing.runner
 import cartspec.testing.scenario
-from cartspec.testing import Perturbation, Scenario, ScenarioResult
+from cartspec.testing import Perturbation, Scenario, ScenarioResult, Trigger
 from cartspec.testing.assertion import AssertionResult
-from cartspec.testing.perturbations import PriceMutation
-from cartspec.testing.triggers import ToolTrigger
+from cartspec.testing.perturbations import ChangePrice
+from cartspec.testing.triggers import AfterTool
 from cartspec.trajectory import TrajectoryStep
 
 
 def test_scenario_construction() -> None:
     agent = object()
     environment = object()
-    perturbation = PriceMutation(offer_id="offer_1", new_price=179.0)
-    trigger = ToolTrigger(tool_name="get_offers_for_product", perturbation=perturbation)
+    trigger = AfterTool(tool_name="get_offers_for_product")
+    perturbation = ChangePrice(offer_id="offer_1", new_price=179.0)
 
     scenario = Scenario(
         name="price changes",
         agent=agent,
         environment=environment,
-        perturbations=[trigger],
+        perturbations=[(trigger, perturbation)],
     )
 
     assert scenario.name == "price changes"
     assert scenario.agent is agent
     assert scenario.environment is environment
-    assert scenario.perturbations == [trigger]
+    assert scenario.perturbations == [(trigger, perturbation)]
     assert scenario.assertions == []
 
 
@@ -53,6 +53,11 @@ def test_perturbation_is_abstract() -> None:
         Perturbation()
 
 
+def test_trigger_is_abstract() -> None:
+    with pytest.raises(TypeError):
+        Trigger()
+
+
 def test_agent_runner_remains_generic() -> None:
     module = ast.parse(inspect.getsource(cartspec.testing.runner))
     referenced_names = {
@@ -64,6 +69,7 @@ def test_agent_runner_remains_generic() -> None:
             "Scenario",
             "ScenarioRunner",
             "Perturbation",
+            "Trigger",
             "Assertion",
             "CommerceEnvironment",
         }

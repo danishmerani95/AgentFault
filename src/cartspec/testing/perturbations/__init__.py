@@ -1,5 +1,6 @@
 from cartspec.testing.perturbations.base import Perturbation
-from cartspec.testing.perturbations.inventory_mutation import InventoryMutation
-from cartspec.testing.perturbations.price_mutation import PriceMutation
+from cartspec.testing.perturbations.change_inventory import ChangeInventory
+from cartspec.testing.perturbations.change_price import ChangePrice
+from cartspec.testing.perturbations.fail_tool import FailTool
 
-__all__ = ["Perturbation", "PriceMutation", "InventoryMutation"]
+__all__ = ["ChangeInventory", "ChangePrice", "FailTool", "Perturbation"]

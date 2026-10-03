@@ -1,11 +1,10 @@
 from typing import Any
 
 from cartspec.testing.assertion import AssertionResult
-from cartspec.testing.perturbations.base import Perturbation
 from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
 from cartspec.testing.scenario_result import ScenarioResult
-from cartspec.testing.triggers.tool import ToolTrigger
+from cartspec.testing.triggers import AfterTool, BeforeTool, Trigger
 from cartspec.tools.tool import ToolCall, ToolRegistry
 
 
@@ -16,18 +15,20 @@ class ScenarioRunner:
         self.tool_registry = tool_registry
 
     def run(self, scenario: Scenario) -> ScenarioResult:
-        pending_perturbations: list[Perturbation] = []
         execution_error: Exception | None = None
 
-        def before_tool_execution(_: ToolCall) -> None:
-            for perturbation in pending_perturbations:
-                perturbation.apply(scenario.environment)
-            pending_perturbations.clear()
+        def apply_matching_perturbations(
+            trigger_type: type[Trigger], tool_call: ToolCall
+        ) -> None:
+            for trigger, perturbation in scenario.perturbations:
+                if isinstance(trigger, trigger_type) and trigger.matches(tool_call):
+                    perturbation.apply(scenario.environment)
+
+        def before_tool_execution(tool_call: ToolCall) -> None:
+            apply_matching_perturbations(BeforeTool, tool_call)
 
         def on_tool_executed(tool_call: ToolCall, _: Any) -> None:
-            for trigger in scenario.perturbations:
-                if isinstance(trigger, ToolTrigger) and trigger.tool_name == tool_call.name:
-                    pending_perturbations.append(trigger.perturbation)
+            apply_matching_perturbations(AfterTool, tool_call)
 
         def on_tool_error(_: ToolCall, error: Exception) -> None:
             nonlocal execution_error

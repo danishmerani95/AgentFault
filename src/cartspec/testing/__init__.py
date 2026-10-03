@@ -4,6 +4,7 @@ from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
 from cartspec.testing.scenario_runner import ScenarioRunner
 from cartspec.testing.scenario_result import ScenarioResult
+from cartspec.testing.triggers import Trigger
 
 __all__ = [
     "AgentRunner",
@@ -13,4 +14,5 @@ __all__ = [
     "Scenario",
     "ScenarioRunner",
     "ScenarioResult",
+    "Trigger",
 ]

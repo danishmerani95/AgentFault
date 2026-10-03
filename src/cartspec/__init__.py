@@ -18,6 +18,7 @@ from cartspec.testing import (
     Scenario,
     ScenarioRunner,
     ScenarioResult,
+    Trigger,
 )
 from cartspec.tools import Tool, ToolCall, ToolRegistry
 from cartspec.trajectory import TrajectoryStep
@@ -44,5 +45,6 @@ __all__ = [
     "ToolCall",
     "ToolRegistry",
     "TrajectoryStep",
+    "Trigger",
     "create_commerce_tools",
 ]

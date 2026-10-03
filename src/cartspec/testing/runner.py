@@ -35,10 +35,9 @@ class AgentRunner:
             if tool_call is None:
                 return observation
 
-            if self.before_tool_execution is not None:
-                self.before_tool_execution(tool_call)
-
             try:
+                if self.before_tool_execution is not None:
+                    self.before_tool_execution(tool_call)
                 observation = self.tool_registry.execute(tool_call)
             except Exception as error:
                 if self.on_tool_error is not None:
@@ -56,3 +55,5 @@ class AgentRunner:
 
             if self.on_tool_executed is not None:
                 self.on_tool_executed(tool_call, snapshot)
+
+            observation = snapshot

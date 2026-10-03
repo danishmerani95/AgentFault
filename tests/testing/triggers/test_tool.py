@@ -1,10 +1,17 @@
-from cartspec.testing.perturbations.price_mutation import PriceMutation
-from cartspec.testing.triggers.tool import ToolTrigger
+from cartspec.testing.triggers import AfterTool, BeforeTool
+from cartspec.tools import ToolCall
 
 
-def test_tool_trigger_has_correct_definition() -> None:
-    perturbation = PriceMutation(offer_id="test_id", new_price=100)
-    trigger = ToolTrigger(tool_name="get_offers_for_product", perturbation=perturbation)
+def test_before_tool_matches_only_its_tool() -> None:
+    trigger = BeforeTool(tool_name="get_offers_for_product")
 
     assert trigger.tool_name == "get_offers_for_product"
-    assert trigger.perturbation is perturbation
+    assert trigger.matches(ToolCall(name="get_offers_for_product", arguments={}))
+    assert not trigger.matches(ToolCall(name="get_offer", arguments={}))
+
+
+def test_after_tool_matches_only_its_tool() -> None:
+    trigger = AfterTool(tool_name="get_offers_for_product")
+
+    assert trigger.matches(ToolCall(name="get_offers_for_product", arguments={}))
+    assert not trigger.matches(ToolCall(name="get_offer", arguments={}))
