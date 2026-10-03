@@ -1,6 +1,6 @@
 from typing import Any
 
-from cartspec.testing.assertion import AssertionResult
+from cartspec.testing.assertion import AssertionResult, EvaluationContext
 from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
 from cartspec.testing.scenario_result import ScenarioResult
@@ -42,9 +42,15 @@ class ScenarioRunner:
             on_tool_error=on_tool_error,
         )
         result = agent_runner.run()
+        evaluation_context = EvaluationContext(
+            final_observation=result,
+            trajectory=agent_runner.trajectory,
+            error=execution_error,
+            environment=scenario.environment,
+        )
 
         assertion_results: list[AssertionResult] = [
-            assertion.check(result=result, trajectory=agent_runner.trajectory)
+            assertion.check(evaluation_context)
             for assertion in scenario.assertions
         ]
         passed = execution_error is None and all(

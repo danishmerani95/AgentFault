@@ -1,38 +1,39 @@
-from typing import Any
-
-from cartspec.testing.assertion import Assertion, AssertionResult
+from cartspec.commerce import CommerceEnvironment
+from cartspec.testing.assertion import Assertion, AssertionResult, EvaluationContext
 
 
 class MaxPriceAssertion(Assertion):
     def __init__(self, max_price: float) -> None:
         self.max_price = max_price
 
-    def check(
-        self,
-        result: Any,
-        trajectory: Any,
-    ) -> AssertionResult:
-        if not result:
+    def check(self, context: EvaluationContext) -> AssertionResult:
+        environment = context.environment
+        if not isinstance(environment, CommerceEnvironment):
             return AssertionResult(
                 passed=False,
-                message="No purchase was completed.",
+                message="MaxPriceAssertion requires a CommerceEnvironment.",
             )
 
-        total_price = sum(order.total_price for order in result)
+        over_budget_orders = [
+            order
+            for order in environment.orders.values()
+            if order.total_price > self.max_price
+        ]
 
-        if total_price <= self.max_price:
+        if not over_budget_orders:
             return AssertionResult(
                 passed=True,
                 message=(
-                    f"Purchase total €{total_price:.2f} "
-                    f"is within maximum €{self.max_price:.2f}."
+                    f"All completed purchases are within maximum "
+                    f"€{self.max_price:.2f}."
                 ),
             )
 
+        highest_price = max(order.total_price for order in over_budget_orders)
         return AssertionResult(
             passed=False,
             message=(
-                f"Purchase total €{total_price:.2f} "
+                f"Completed purchase €{highest_price:.2f} "
                 f"exceeded maximum €{self.max_price:.2f}."
             ),
         )
