@@ -16,8 +16,8 @@ from cartspec.testing import (
     AssertionResult,
     Perturbation,
     Scenario,
+    ScenarioRunner,
     ScenarioResult,
-    TestRunner,
 )
 from cartspec.tools import Tool, ToolCall, ToolRegistry
 from cartspec.trajectory import TrajectoryStep
@@ -38,8 +38,8 @@ __all__ = [
     "Product",
     "Perturbation",
     "Scenario",
+    "ScenarioRunner",
     "ScenarioResult",
-    "TestRunner",
     "Tool",
     "ToolCall",
     "ToolRegistry",

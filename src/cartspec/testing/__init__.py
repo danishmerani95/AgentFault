@@ -2,8 +2,8 @@ from cartspec.testing.assertion import Assertion, AssertionResult
 from cartspec.testing.perturbations import Perturbation
 from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
+from cartspec.testing.scenario_runner import ScenarioRunner
 from cartspec.testing.scenario_result import ScenarioResult
-from cartspec.testing.test_runner import TestRunner
 
 __all__ = [
     "AgentRunner",
@@ -11,6 +11,6 @@ __all__ = [
     "AssertionResult",
     "Perturbation",
     "Scenario",
+    "ScenarioRunner",
     "ScenarioResult",
-    "TestRunner",
 ]

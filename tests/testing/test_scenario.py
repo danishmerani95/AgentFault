@@ -1,5 +1,10 @@
+import ast
+import inspect
+
 import pytest
 
+import cartspec.testing.runner
+import cartspec.testing.scenario
 from cartspec.testing import Perturbation, Scenario, ScenarioResult
 from cartspec.testing.assertion import AssertionResult
 from cartspec.testing.perturbations import PriceMutation
@@ -46,3 +51,35 @@ def test_scenario_result_construction() -> None:
 def test_perturbation_is_abstract() -> None:
     with pytest.raises(TypeError):
         Perturbation()
+
+
+def test_agent_runner_remains_generic() -> None:
+    module = ast.parse(inspect.getsource(cartspec.testing.runner))
+    referenced_names = {
+        node.id for node in ast.walk(module) if isinstance(node, ast.Name)
+    }
+
+    assert referenced_names.isdisjoint(
+        {
+            "Scenario",
+            "ScenarioRunner",
+            "Perturbation",
+            "Assertion",
+            "CommerceEnvironment",
+        }
+    )
+
+
+def test_scenario_remains_declarative_and_does_not_own_tool_registry() -> None:
+    module = ast.parse(inspect.getsource(cartspec.testing.scenario))
+    scenario_definition = next(
+        node
+        for node in module.body
+        if isinstance(node, ast.ClassDef) and node.name == "Scenario"
+    )
+
+    assert not any(
+        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        for node in scenario_definition.body
+    )
+    assert "ToolRegistry" not in inspect.getsource(cartspec.testing.scenario)

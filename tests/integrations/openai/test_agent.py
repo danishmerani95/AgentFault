@@ -1,42 +1,44 @@
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# from cartspec.commerce.tools import create_commerce_tools
-# from cartspec.integrations.openai import OpenAICommerceAgent, to_openai_tools
-# from cartspec.testing.assertions.budget import MaxPriceAssertion
-# from cartspec.testing.scenario import Scenario
-# from cartspec.testing.test_runner import TestRunner
-# from cartspec.tools.tool import ToolRegistry
-# from examples.basic_world import create_basic_world
+from cartspec.commerce.tools import create_commerce_tools
+from cartspec.integrations.openai import OpenAICommerceAgent, to_openai_tools
+from cartspec.testing.assertions.budget import MaxPriceAssertion
+from cartspec.testing.scenario import Scenario
+from cartspec.testing.scenario_runner import ScenarioRunner
+from cartspec.tools.tool import ToolRegistry
+from examples.basic_world import create_basic_world
 
-# load_dotenv()
+load_dotenv()
 
 
-# def test_openai_agent_passes_budget_constraint() -> None:
-#     world = create_basic_world()
+def test_openai_agent_passes_budget_constraint() -> None:
+    world = create_basic_world()
 
-#     tools = create_commerce_tools(world)
-#     registry = ToolRegistry(tools)
+    tools = create_commerce_tools(world)
+    registry = ToolRegistry(tools)
 
-#     openai_tools = to_openai_tools(tools)
+    openai_tools = to_openai_tools(tools)
 
-#     agent = OpenAICommerceAgent(
-#         query="headphones",
-#         max_price=150.0,
-#         tools=openai_tools,
-#         model="gpt-4o-mini",
-#     )
+    agent = OpenAICommerceAgent(
+        query="headphones",
+        max_price=150.0,
+        tools=openai_tools,
+        model="gpt-4o-mini",
+    )
 
-#     scenario = Scenario(
-#         name="budget_constraint",
-#         assertions=[
-#             MaxPriceAssertion(max_price=150.0),
-#         ],
-#     )
+    scenario = Scenario(
+        name="budget_constraint",
+        agent=agent,
+        environment=world,
+        assertions=[
+            MaxPriceAssertion(max_price=150.0),
+        ],
+    )
 
-#     runner = TestRunner(agent=agent, tool_registry=registry, environment=world)
+    runner = ScenarioRunner(tool_registry=registry)
 
-#     result = runner.run(scenario)
+    result = runner.run(scenario)
 
-#     assert result.passed is True
-#     assert len(result.assertions) == 1
-#     assert result.assertions[0].passed is True
+    assert result.passed is True
+    assert len(result.assertions) == 1
+    assert result.assertions[0].passed is True

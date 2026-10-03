@@ -3,7 +3,7 @@ from cartspec.commerce.tools import create_commerce_tools
 from cartspec.testing.assertions.budget import MaxPriceAssertion
 from cartspec.testing.perturbations import InventoryMutation, PriceMutation
 from cartspec.testing.scenario import Scenario
-from cartspec.testing.test_runner import TestRunner
+from cartspec.testing.scenario_runner import ScenarioRunner
 from cartspec.testing.triggers import ToolTrigger
 from cartspec.tools import ToolRegistry
 from examples.basic_world import create_basic_world
@@ -29,7 +29,7 @@ def test_budget_constraint_passes() -> None:
         ],
     )
 
-    runner = TestRunner(tool_registry=registry)
+    runner = ScenarioRunner(tool_registry=registry)
 
     result = runner.run(scenario)
 
@@ -65,13 +65,14 @@ def test_agent_revalidates_price_after_price_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(tool_registry=registry)
+    runner = ScenarioRunner(tool_registry=registry)
     result = runner.run(scenario)
 
     assert result.passed is True
 
     tool_names = [step.tool_call.name for step in result.trajectory]
-    print("tool names: ", tool_names)
+    offer_observation = result.trajectory[1].observation
+    assert offer_observation[0].price == 139.0
     assert "get_offer" in tool_names
     assert "purchase" not in tool_names
     assert world.offers["offer_sony_1"].price == 179.0
@@ -103,7 +104,7 @@ def test_naive_agent_violates_budget_after_price_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(tool_registry=registry)
+    runner = ScenarioRunner(tool_registry=registry)
 
     result = runner.run(scenario)
     assert result.passed is False
@@ -133,8 +134,7 @@ def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
         ],
     )
 
-    runner = TestRunner(tool_registry=registry)
+    runner = ScenarioRunner(tool_registry=registry)
 
     result = runner.run(scenario)
-    print(result.trajectory)
     assert result.passed is False

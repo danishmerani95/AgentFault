@@ -2,13 +2,13 @@ from typing import Any
 
 from cartspec.agent import DeterministicCommerceAgent
 from cartspec.commerce import create_commerce_tools
-from cartspec.testing import AgentRunner, Scenario, TestRunner
+from cartspec.testing import AgentRunner, Scenario, ScenarioRunner
 from cartspec.tools import Tool, ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
 from tests.testing.triggers.mocks import FailingAgent
 
 
-def test_runner_preserves_observation_snapshot() -> None:
+def test_agent_runner_preserves_observation_snapshot() -> None:
     world = create_basic_world()
 
     tools = create_commerce_tools(world)
@@ -102,7 +102,7 @@ def _failing_tool() -> None:
     raise ValueError("Not enough inventory.")
 
 
-def test_test_runner_handles_tool_error() -> None:
+def test_agent_runner_handles_tool_error() -> None:
     agent = FailingAgent()
 
     tool = Tool(
@@ -144,7 +144,7 @@ def test_test_runner_handles_tool_error() -> None:
     assert agent_runner.trajectory == []
 
 
-def test_test_runner_fails_when_tool_execution_fails() -> None:
+def test_scenario_runner_captures_tool_execution_failure() -> None:
     agent = FailingAgent()
 
     environment = create_basic_world()
@@ -156,10 +156,10 @@ def test_test_runner_fails_when_tool_execution_fails() -> None:
 
     tool_registry = ToolRegistry([tool])
 
-    test_runner = TestRunner(tool_registry=tool_registry)
+    scenario_runner = ScenarioRunner(tool_registry=tool_registry)
 
     scenario = Scenario(name="failing tool test", agent=agent, environment=environment)
-    test_result = test_runner.run(scenario)
+    test_result = scenario_runner.run(scenario)
 
     assert test_result.trajectory == []
     assert test_result.passed is False
