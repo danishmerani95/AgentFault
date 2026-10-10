@@ -27,7 +27,10 @@ def _factory_reference(marker: pytest.Mark) -> tuple[str, int]:
             raise ValueError(
                 "Use @pytest.mark.agentfault('module:function') with one factory."
             )
-        positional_factory = marker.args[0]
+        candidate = marker.args[0]
+        if not isinstance(candidate, str) or not candidate:
+            raise ValueError("Scenario factory must be a non-empty string.")
+        positional_factory = candidate
 
     keyword_factory = kwargs.get("factory")
     if positional_factory is not None and keyword_factory is not None:

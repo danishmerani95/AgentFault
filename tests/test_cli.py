@@ -1,6 +1,7 @@
 import json
 from typing import Any
 
+from cartspec.agent import DeterministicCommerceAgent
 from cartspec.cli import main
 from cartspec.commerce.tools import create_commerce_tools
 from cartspec.testing import Assertion, AssertionResult, EvaluationContext, Scenario
@@ -18,9 +19,7 @@ def build_failing_scenario() -> tuple[Scenario, ToolRegistry]:
     registry = ToolRegistry(create_commerce_tools(environment))
     scenario = Scenario(
         name="intentional failure",
-        agent=__import__(
-            "cartspec.agent", fromlist=["DeterministicCommerceAgent"]
-        ).DeterministicCommerceAgent(query="headphones", max_price=150.0),
+        agent=DeterministicCommerceAgent(query="headphones", max_price=150.0),
         environment=environment,
         assertions=[_AlwaysFailAssertion()],
     )
