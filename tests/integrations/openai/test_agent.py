@@ -4,9 +4,9 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from openai.types.chat import ChatCompletionMessageFunctionToolCall
+from openai.types.chat import ChatCompletionMessageFunctionToolCall, ChatCompletionToolParam
 
-from cartspec.integrations.openai.agent import OpenAICommerceAgent
+from cartspec.integrations.openai.agent import OpenAIAgent, OpenAICommerceAgent
 from cartspec.tools import ToolCall
 
 
@@ -183,7 +183,6 @@ def test_provider_exceptions_propagate() -> None:
         agent.next_action(None)
 
 
-
 def test_tool_error_observation_is_sent_as_tool_result_json() -> None:
     client = _FakeClient([_response(_tool_call()), _response()])
     agent = _agent(client)
@@ -201,3 +200,56 @@ def test_tool_error_observation_is_sent_as_tool_result_json() -> None:
     assert tool_message["role"] == "tool"
     assert tool_message["tool_call_id"] == "call_1"  # type: ignore[index]
     assert json.loads(tool_message["content"]) == error_observation  # type: ignore[index]
+
+
+def test_generic_openai_agent_uses_supplied_prompts_and_tool_schemas() -> None:
+    client = _FakeClient([_response(_tool_call(name="read_document"))])
+    tool_schema: ChatCompletionToolParam = {
+        "type": "function",
+        "function": {
+            "name": "read_document",
+            "description": "Read a document by its identifier.",
+            "parameters": {
+                "type": "object",
+                "properties": {"document_id": {"type": "string"}},
+                "required": ["document_id"],
+            },
+        },
+    }
+    agent = OpenAIAgent(
+        system_prompt="You help users analyze documents.",
+        user_prompt="Summarize the quarterly report.",
+        tools=[tool_schema],
+        model="test-model",
+        client=client,  # type: ignore[arg-type]
+    )
+
+    action = agent.next_action(None)
+
+    assert action is not None
+    assert action.name == "read_document"
+    request_messages = client.chat.completions.calls[0]["messages"]
+    assert request_messages[0]["role"] == "system"
+    assert request_messages[0]["content"] == "You help users analyze documents."
+    assert request_messages[1]["role"] == "user"
+    assert request_messages[1]["content"] == "Summarize the quarterly report."
+    assert client.chat.completions.calls[0]["tools"] == [tool_schema]
+
+
+def test_commerce_agent_remains_a_compatible_prompt_wrapper() -> None:
+    client = _FakeClient([_response(_tool_call())])
+    agent = OpenAICommerceAgent(
+        query="headphones",
+        max_price=150.0,
+        tools=[],
+        model="test-model",
+        client=client,  # type: ignore[arg-type]
+    )
+
+    agent.next_action(None)
+
+    request_messages = client.chat.completions.calls[0]["messages"]
+    assert request_messages[0]["content"].startswith("You are a commerce agent.")
+    assert request_messages[1]["content"] == "Buy me headphones under 150.0 EUR."
+    assert agent.query == "headphones"
+    assert agent.max_price == 150.0
