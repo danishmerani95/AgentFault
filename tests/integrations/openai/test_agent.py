@@ -1,3 +1,4 @@
+import json
 from collections.abc import Iterable
 from types import SimpleNamespace
 from typing import Any
@@ -180,3 +181,23 @@ def test_provider_exceptions_propagate() -> None:
 
     with pytest.raises(RuntimeError, match="provider failed"):
         agent.next_action(None)
+
+
+
+def test_tool_error_observation_is_sent_as_tool_result_json() -> None:
+    client = _FakeClient([_response(_tool_call()), _response()])
+    agent = _agent(client)
+    agent.next_action(None)
+
+    error_observation = {
+        "type": "tool_error",
+        "tool_name": "search_products",
+        "error_type": "RuntimeError",
+        "message": "temporary failure",
+    }
+    assert agent.next_action(error_observation) is None
+
+    tool_message = agent.messages[-1]
+    assert tool_message["role"] == "tool"
+    assert tool_message["tool_call_id"] == "call_1"  # type: ignore[index]
+    assert json.loads(tool_message["content"]) == error_observation  # type: ignore[index]

@@ -8,3 +8,9 @@ from cartspec.tools.tool import ToolCall
 class TrajectoryStep:
     tool_call: ToolCall
     observation: Any
+    error: dict[str, str] | None = None
+
+    @property
+    def succeeded(self) -> bool:
+        """Whether the tool call completed successfully."""
+        return self.error is None
