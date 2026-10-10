@@ -94,16 +94,28 @@ AgentFault provides a `LangGraphToolCallInterceptor` for LangGraph's `ToolNode(w
 The basic integration is to pass the interceptor when constructing the `ToolNode` that executes the tools under test, and then invoke your compiled graph through the AgentFault runner:
 
 ```python
+from typing import Any
+
+from langchain_core.messages import HumanMessage
+from langgraph.prebuilt import ToolNode
+
 from agentfault.integrations.langgraph import (
     LangGraphScenarioRunner,
     LangGraphToolCallInterceptor,
 )
 from agentfault.testing import Scenario
 from agentfault.testing.assertions import ProhibitedActionAssertion
+from agentfault.testing.perturbations import Perturbation
 from agentfault.testing.triggers import AfterTool
-from langgraph.prebuilt import ToolNode
 
-# Your existing tools, test environment, and graph nodes stay yours.
+
+# Define a change in your fake/test environment.
+class SuspendAccount(Perturbation):
+    def apply(self, environment: Any) -> None:
+        environment.account_status = "suspended"
+
+
+# Reuse your application's tools and test fixture.
 perturbations = [
     (AfterTool("lookup_account"), SuspendAccount()),
 ]
@@ -112,12 +124,13 @@ interceptor = LangGraphToolCallInterceptor(
     perturbations=perturbations,
 )
 
-# Use this ToolNode in your existing StateGraph.
+# Route the existing graph's tool node through the interceptor.
 tool_node = ToolNode(
     [lookup_account_tool, issue_refund_tool],
     wrap_tool_call=interceptor,
 )
-# ...build/compile your existing graph using tool_node...
+# Build/compile your existing StateGraph with this tool_node.
+compiled_graph = build_existing_graph(tool_node)
 
 scenario = Scenario(
     name="account suspended after lookup",
@@ -136,7 +149,7 @@ assert result.passed, [
 ]
 ```
 
-The example above shows the integration seam; names such as `SuspendAccount`, `test_environment`, and your tool variables represent your application's own fixtures and functions.
+`test_environment`, `lookup_account_tool`, `issue_refund_tool`, and `build_existing_graph` are your existing test fixture, tools, and graph-construction function. Keep those connected to a fake backend or sandbox, not live refund services.
 
 Try the complete deterministic example (no LLM API key required):
 
