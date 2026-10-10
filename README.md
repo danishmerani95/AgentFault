@@ -95,7 +95,21 @@ def test_checkout(agentfault_result: ScenarioResult) -> None:
 
 The CLI and pytest fixture both use the same `ScenarioRunner`; pytest integration does not introduce a separate execution path. A factory should create a fresh scenario and environment each time it is called.
 
+## Connect an existing agent
+
+Implement the small `Agent` adapter contract: translate the framework’s next proposed tool call into `ToolCall`, return it without executing it, then translate AgentFault’s observation into the framework’s tool-result format on the next call. Register the same underlying tool functions through `ToolRegistry` so AgentFault can record and intercept each execution.
+
+A runnable custom-adapter example is available:
+
+```bash
+uv run python -m examples.custom_adapter
+uv run pytest tests/examples/test_custom_adapter.py
+```
+
+See [the custom adapter guide](docs/custom-adapters.md) for the contract, limitations, and notes for OpenAI SDK, LangChain, LangGraph, and Claude. LangChain, LangGraph, and Claude adapters are not built in yet; integrations must preserve AgentFault’s control over individual tool executions for mid-run perturbations to work.
+
 ## Further information
 
+- [Custom adapter guide](docs/custom-adapters.md)
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
