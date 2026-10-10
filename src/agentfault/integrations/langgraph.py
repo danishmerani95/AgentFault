@@ -15,7 +15,7 @@ from agentfault.testing.perturbations import (
 from agentfault.testing.scenario import Scenario
 from agentfault.testing.scenario_result import ScenarioResult
 from agentfault.testing.triggers import AfterTool, BeforeTool, Trigger
-from agentfault.tools import ToolCall, ToolExecutionFailure
+from agentfault.tools import ToolCall
 from agentfault.trajectory import TrajectoryStep
 
 
@@ -67,9 +67,19 @@ class LangGraphToolCallInterceptor:
 
         pending_failure = self._take_pending_failure(tool_call)
         if pending_failure is not None:
+            # ToolNode's wrapper runs outside its internal tool-error handler.
+            # Return a synthetic error ToolMessage so the graph can observe the
+            # failure and decide whether to retry, just as with a real tool error.
+            from langchain_core.messages import ToolMessage
+
             error = RuntimeError(pending_failure.message)
             self._record_failure(tool_call, error)
-            raise ToolExecutionFailure(tool_call.name, error) from error
+            return ToolMessage(
+                content=pending_failure.message,
+                tool_call_id=tool_call.id or "",
+                name=tool_call.name,
+                status="error",
+            )
 
         try:
             response = handler(request)
