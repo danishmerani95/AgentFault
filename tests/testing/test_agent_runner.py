@@ -132,7 +132,12 @@ def test_agent_runner_handles_tool_error() -> None:
 
     result = agent_runner.run()
 
-    assert result is None
+    assert result == {
+        "type": "tool_error",
+        "tool_name": "failing_tool",
+        "error_type": "ValueError",
+        "message": "Not enough inventory.",
+    }
     assert captured_tool_call is not None
     assert captured_tool_call.name == "failing_tool"
 
@@ -140,8 +145,13 @@ def test_agent_runner_handles_tool_error() -> None:
     assert isinstance(captured_error, ValueError)
     assert str(captured_error) == "Not enough inventory."
 
-    assert agent.call_count == 1
-    assert agent_runner.trajectory == []
+    assert agent.call_count == 2
+    assert len(agent_runner.trajectory) == 1
+    assert agent_runner.trajectory[0].succeeded is False
+    assert agent_runner.trajectory[0].error == {
+        "type": "ValueError",
+        "message": "Not enough inventory.",
+    }
 
 
 class _FixedExecutor(ToolExecutor):
@@ -187,9 +197,11 @@ def test_scenario_runner_captures_tool_execution_failure() -> None:
     scenario = Scenario(name="failing tool test", agent=agent, environment=environment)
     test_result = scenario_runner.run(scenario)
 
-    assert test_result.trajectory == []
-    assert test_result.passed is False
-
-    assert test_result.error is not None
-    assert isinstance(test_result.error, ValueError)
-    assert str(test_result.error) == "Not enough inventory."
+    assert test_result.trajectory[0].succeeded is False
+    assert test_result.trajectory[0].error == {
+        "type": "ValueError",
+        "message": "Not enough inventory.",
+    }
+    # A completed run is not failed solely because a tool call raised an exception.
+    assert test_result.passed is True
+    assert test_result.error is None

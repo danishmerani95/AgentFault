@@ -6,7 +6,13 @@ from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
 from cartspec.testing.scenario_result import ScenarioResult
 from cartspec.testing.triggers import AfterTool, BeforeTool, Trigger
-from cartspec.tools import RegistryToolExecutor, ToolCall, ToolExecutor, ToolRegistry
+from cartspec.tools import (
+    RegistryToolExecutor,
+    ToolCall,
+    ToolExecutionFailure,
+    ToolExecutor,
+    ToolRegistry,
+)
 
 
 class _PerturbableToolExecutor(ToolExecutor):
@@ -21,7 +27,10 @@ class _PerturbableToolExecutor(ToolExecutor):
         for index, perturbation in enumerate(self.pending_failures):
             if perturbation.matches(tool_call):
                 del self.pending_failures[index]
-                perturbation.apply(None)
+                try:
+                    perturbation.apply(None)
+                except Exception as error:
+                    raise ToolExecutionFailure(tool_call.name, error) from error
 
         return self.tool_executor.execute(tool_call)
 
@@ -29,11 +38,11 @@ class _PerturbableToolExecutor(ToolExecutor):
 class ScenarioRunner:
     __test__ = False
 
-    def __init__(self, tool_registry: ToolRegistry) -> None:
+    def __init__(self, tool_registry: ToolRegistry, max_steps: int = 100) -> None:
         self.tool_registry = tool_registry
+        self.max_steps = max_steps
 
     def run(self, scenario: Scenario) -> ScenarioResult:
-        execution_error: Exception | None = None
         tool_executor = _PerturbableToolExecutor(RegistryToolExecutor(self.tool_registry))
 
         def apply_matching_perturbations(
@@ -52,22 +61,25 @@ class ScenarioRunner:
         def on_tool_executed(tool_call: ToolCall, _: Any) -> None:
             apply_matching_perturbations(AfterTool, tool_call)
 
-        def on_tool_error(_: ToolCall, error: Exception) -> None:
-            nonlocal execution_error
-            execution_error = error
-
         agent_runner = AgentRunner(
             agent=scenario.agent,
             tool_executor=tool_executor,
             before_tool_execution=before_tool_execution,
             on_tool_executed=on_tool_executed,
-            on_tool_error=on_tool_error,
+            max_steps=self.max_steps,
         )
-        result = agent_runner.run()
+        final_observation = agent_runner.run()
+        terminal_error = None
+        if agent_runner.step_limit_reached:
+            terminal_error = RuntimeError(
+                "AgentRunner reached its maximum of "
+                f"{agent_runner.max_steps} tool executions before the agent stopped."
+            )
+
         evaluation_context = EvaluationContext(
-            final_observation=result,
+            final_observation=final_observation,
             trajectory=agent_runner.trajectory,
-            error=execution_error,
+            error=terminal_error,
             environment=scenario.environment,
         )
 
@@ -75,7 +87,7 @@ class ScenarioRunner:
             assertion.check(evaluation_context)
             for assertion in scenario.assertions
         ]
-        passed = execution_error is None and all(
+        passed = terminal_error is None and all(
             assertion_result.passed for assertion_result in assertion_results
         )
 
@@ -83,5 +95,5 @@ class ScenarioRunner:
             passed=passed,
             assertions=assertion_results,
             trajectory=agent_runner.trajectory,
-            error=execution_error,
+            error=terminal_error,
         )

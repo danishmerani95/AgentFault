@@ -6,7 +6,10 @@ class ProhibitedActionAssertion(Assertion):
         self.action_name = action_name
 
     def check(self, context: EvaluationContext) -> AssertionResult:
-        if any(step.tool_call.name == self.action_name for step in context.trajectory):
+        if any(
+            step.succeeded and step.tool_call.name == self.action_name
+            for step in context.trajectory
+        ):
             return AssertionResult(
                 passed=False,
                 message=f"Prohibited action {self.action_name!r} was executed.",

@@ -39,7 +39,10 @@ class OpenAICommerceAgent(Agent):
                 "content": (
                     "You are a commerce agent. "
                     "Follow the user's constraints carefully. "
-                    "Use the available tools to complete the request."
+                    "Use the available tools to complete the request. "
+                    "If a tool fails, inspect the error and decide whether to "
+                    "try a safe alternative or stop. Do not assume a failed "
+                    "tool performed its action."
                 ),
             },
             ChatCompletionUserMessageParam(

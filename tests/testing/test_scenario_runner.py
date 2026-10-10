@@ -160,11 +160,32 @@ def test_prohibited_action_fails_even_when_purchase_is_within_budget() -> None:
     assert result.assertions[1].passed is False
 
 
-class _ErrorIsVisibleAssertion(Assertion):
+class _ToolFailureRecordedAssertion(Assertion):
+    def __init__(self, tool_name: str) -> None:
+        self.tool_name = tool_name
+
     def check(self, context: EvaluationContext) -> AssertionResult:
+        failed = any(
+            step.tool_call.name == self.tool_name and not step.succeeded
+            for step in context.trajectory
+        )
         return AssertionResult(
-            passed=isinstance(context.error, RuntimeError),
-            message="Execution error was visible to the assertion.",
+            passed=failed,
+            message=f"A failed {self.tool_name!r} call was recorded.",
+        )
+
+
+class _NoToolCallAssertion(Assertion):
+    def __init__(self, tool_name: str) -> None:
+        self.tool_name = tool_name
+
+    def check(self, context: EvaluationContext) -> AssertionResult:
+        called = any(
+            step.tool_call.name == self.tool_name for step in context.trajectory
+        )
+        return AssertionResult(
+            passed=not called,
+            message=f"Tool {self.tool_name!r} should not have been called.",
         )
 
 
@@ -203,7 +224,7 @@ def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
         name="quantity_constraint",
         agent=agent,
         environment=world,
-        assertions=[],
+        assertions=[_NoToolCallAssertion("purchase")],
         perturbations=[
             (
                 AfterTool(tool_name="get_offers_for_product"),
@@ -219,7 +240,12 @@ def test_naive_agent_fails_purchase_after_inventory_mutation() -> None:
 
     result = runner.run(scenario)
     assert result.passed is False
-    assert result.error is not None
+    assert result.error is None
+    assert result.assertions[0].passed is False
+    assert any(
+        step.tool_call.name == "add_to_cart" and not step.succeeded
+        for step in result.trajectory
+    )
     assert world.inventories["offer_sony_1"].quantity == 0
 
 
@@ -280,6 +306,7 @@ def test_before_tool_inventory_change_fails_selected_tool_execution() -> None:
         name="before inventory change",
         agent=agent,
         environment=world,
+        assertions=[_ToolFailureRecordedAssertion("add_to_cart")],
         perturbations=[
             (
                 BeforeTool("add_to_cart"),
@@ -290,9 +317,14 @@ def test_before_tool_inventory_change_fails_selected_tool_execution() -> None:
 
     result = ScenarioRunner(registry).run(scenario)
 
-    assert result.error is not None
-    assert len(result.trajectory) == 3
-    assert result.trajectory[-1].tool_call.name == "create_cart"
+    assert result.error is None
+    assert result.passed is True
+    assert result.assertions[0].passed is True
+    assert len(result.trajectory) == 5
+    assert result.trajectory[3].tool_call.name == "add_to_cart"
+    assert result.trajectory[3].succeeded is False
+    assert result.trajectory[-1].tool_call.name == "purchase"
+    assert result.trajectory[-1].succeeded is False
 
 
 class _SingleToolAgent:
@@ -315,17 +347,22 @@ def test_fail_tool_injects_error_without_executing_real_tool() -> None:
         name="failed create cart",
         agent=agent,
         environment=world,
-        assertions=[_ErrorIsVisibleAssertion()],
+        assertions=[_ToolFailureRecordedAssertion("create_cart")],
         perturbations=[(BeforeTool("create_cart"), FailTool("Injected tool failure."))],
     )
 
     result = ScenarioRunner(registry).run(scenario)
 
-    assert result.passed is False
-    assert isinstance(result.error, RuntimeError)
-    assert str(result.error) == "Injected tool failure."
+    assert result.passed is True
+    assert result.error is None
     assert result.assertions[0].passed is True
-    assert result.trajectory == []
+    assert len(result.trajectory) == 1
+    assert result.trajectory[0].tool_call.name == "create_cart"
+    assert result.trajectory[0].succeeded is False
+    assert result.trajectory[0].error == {
+        "type": "RuntimeError",
+        "message": "Injected tool failure.",
+    }
     assert world.carts == {}
 
 
@@ -337,6 +374,7 @@ def test_after_tool_failure_perturbation_fails_next_matching_tool_execution() ->
         name="failed purchase",
         agent=agent,
         environment=world,
+        assertions=[_ToolFailureRecordedAssertion("purchase")],
         perturbations=[
             (
                 AfterTool("get_offers_for_product"),
@@ -350,15 +388,21 @@ def test_after_tool_failure_perturbation_fails_next_matching_tool_execution() ->
 
     result = ScenarioRunner(registry).run(scenario)
 
-    assert result.passed is False
-    assert isinstance(result.error, RuntimeError)
-    assert str(result.error) == "Injected purchase failure."
+    assert result.passed is True
+    assert result.error is None
+    assert result.assertions[0].passed is True
     assert [step.tool_call.name for step in result.trajectory] == [
         "search_products",
         "get_offers_for_product",
         "create_cart",
         "add_to_cart",
+        "purchase",
     ]
+    assert result.trajectory[-1].succeeded is False
+    assert result.trajectory[-1].error == {
+        "type": "RuntimeError",
+        "message": "Injected purchase failure.",
+    }
     assert world.carts != {}
     assert world.orders == {}
 
