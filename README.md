@@ -28,6 +28,40 @@ CLI exit codes:
 - `1`: the scenario ran but did not satisfy its assertions.
 - `2`: the factory could not be loaded or execution raised an error.
 
+## Example scenario library
+
+The `examples/scenarios/` directory contains small, runnable demonstrations of the core loop. Each factory creates a fresh environment and returns a `(Scenario, ToolRegistry)` pair.
+
+### 1. State changes during a task
+
+The inventory drops to zero after the agent discovers an offer. The scenario passes only when the agent avoids adding the unavailable item to the cart and never attempts a purchase.
+
+```bash
+uv run agentfault run examples.scenarios.state_change:build_scenario
+```
+
+### 2. A tool fails once
+
+A `create_cart` call fails once after product search. The example agent sees the structured tool-error observation, retries, and succeeds. The scenario asserts that both the failed attempt and successful retry appear in the trajectory.
+
+```bash
+uv run agentfault run examples.scenarios.tool_failure_recovery:build_scenario
+```
+
+### 3. A consequential action becomes unsafe
+
+The product price increases from €139 to €179 after the agent has discovered it. This example deliberately uses a naive agent that does not revalidate the price. The budget and prohibited-purchase assertions fail, so the CLI exits with code `1`. That failure is intentional: it demonstrates the regression AgentFault should detect.
+
+```bash
+uv run agentfault run examples.scenarios.unsafe_purchase:build_scenario
+```
+
+Run the automated checks for these example outcomes with:
+
+```bash
+uv run pytest tests/examples/test_scenario_library.py
+```
+
 ## Use scenarios from pytest
 
 The `agentfault.pytest_plugin` plugin is registered with pytest when AgentFault is installed. Mark a test with a factory and request the `agentfault_result` fixture:
