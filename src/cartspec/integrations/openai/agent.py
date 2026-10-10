@@ -18,55 +18,43 @@ from openai.types.chat import (
 )
 
 
-class OpenAICommerceAgent(Agent):
+class OpenAIAgent(Agent):
+    """Generic OpenAI tool-calling agent driven by caller-supplied prompts."""
+
     def __init__(
         self,
-        query: str,
-        max_price: float,
+        system_prompt: str,
+        user_prompt: str,
         tools: list[ChatCompletionToolParam],
         model: str,
+        client: OpenAI | None = None,
     ) -> None:
-        self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
+        self.client = (
+            client if client is not None else OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        )
         self.model = model
-        self.query = query
-        self.max_price = max_price
         self.tools = tools
-
         self.messages: list[ChatCompletionMessageParam] = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a commerce agent. "
-                    "Follow the user's constraints carefully. "
-                    "Use the available tools to complete the request. "
-                    "If a tool fails, inspect the error and decide whether to "
-                    "try a safe alternative or stop. Do not assume a failed "
-                    "tool performed its action."
-                ),
-            },
-            ChatCompletionUserMessageParam(
-                role="user",
-                content=f"Buy me {query} under {max_price} EUR.",
-            ),
+            {"role": "system", "content": system_prompt},
+            ChatCompletionUserMessageParam(role="user", content=user_prompt),
         ]
-
         self.previous_tool_call_id: str | None = None
         self._awaiting_tool_result = False
 
-    def next_action(self, observation: Any) -> ToolCall | None:
-        def _serialize_observation(observation: Any) -> str:
-            if isinstance(observation, BaseModel):
-                return observation.model_dump_json()
-            if isinstance(observation, list):
-                return json.dumps(
-                    [
-                        item.model_dump() if isinstance(item, BaseModel) else item
-                        for item in observation
-                    ]
-                )
-            return json.dumps(observation)
+    @staticmethod
+    def _serialize_observation(observation: Any) -> str:
+        if isinstance(observation, BaseModel):
+            return observation.model_dump_json()
+        if isinstance(observation, list):
+            return json.dumps(
+                [
+                    item.model_dump() if isinstance(item, BaseModel) else item
+                    for item in observation
+                ]
+            )
+        return json.dumps(observation)
 
+    def next_action(self, observation: Any) -> ToolCall | None:
         if self._awaiting_tool_result:
             if self.previous_tool_call_id is None:
                 raise RuntimeError(
@@ -77,7 +65,7 @@ class OpenAICommerceAgent(Agent):
                 ChatCompletionToolMessageParam(
                     role="tool",
                     tool_call_id=self.previous_tool_call_id,
-                    content=_serialize_observation(observation),
+                    content=self._serialize_observation(observation),
                 )
             )
             self._awaiting_tool_result = False
@@ -92,23 +80,18 @@ class OpenAICommerceAgent(Agent):
             raise ValueError("OpenAI response did not include any choices.")
 
         message = response.choices[0].message
-
         tool_calls = message.tool_calls
         if not tool_calls:
             return None
 
         if len(tool_calls) > 1:
             raise ValueError(
-                "OpenAICommerceAgent supports one tool call per response; "
+                "OpenAIAgent supports one tool call per response; "
                 f"received {len(tool_calls)}."
             )
 
         tool_call = tool_calls[0]
-
-        if not isinstance(
-            tool_call,
-            ChatCompletionMessageFunctionToolCall,
-        ):
+        if not isinstance(tool_call, ChatCompletionMessageFunctionToolCall):
             raise TypeError("Expected a function tool call.")
 
         try:
@@ -137,9 +120,37 @@ class OpenAICommerceAgent(Agent):
 
         self.previous_tool_call_id = tool_call.id
         self._awaiting_tool_result = True
-
         return ToolCall(
             id=tool_call.id,
             name=tool_call.function.name,
             arguments=arguments,
+        )
+
+
+class OpenAICommerceAgent(OpenAIAgent):
+    """Backward-compatible commerce-specific prompt wrapper for OpenAIAgent."""
+
+    def __init__(
+        self,
+        query: str,
+        max_price: float,
+        tools: list[ChatCompletionToolParam],
+        model: str,
+        client: OpenAI | None = None,
+    ) -> None:
+        self.query = query
+        self.max_price = max_price
+        super().__init__(
+            system_prompt=(
+                "You are a commerce agent. "
+                "Follow the user's constraints carefully. "
+                "Use the available tools to complete the request. "
+                "If a tool fails, inspect the error and decide whether to "
+                "try a safe alternative or stop. Do not assume a failed "
+                "tool performed its action."
+            ),
+            user_prompt=f"Buy me {query} under {max_price} EUR.",
+            tools=tools,
+            model=model,
+            client=client,
         )
