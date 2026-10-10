@@ -1,4 +1,4 @@
-from cartspec.testing.perturbations import ChangeInventory
+from agentfault.testing.perturbations import ChangeInventory
 from examples.basic_world import create_basic_world
 
 

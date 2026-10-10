@@ -6,8 +6,8 @@ from typing import Any
 import pytest
 from openai.types.chat import ChatCompletionMessageFunctionToolCall, ChatCompletionToolParam
 
-from cartspec.integrations.openai.agent import OpenAIAgent, OpenAICommerceAgent
-from cartspec.tools import ToolCall
+from agentfault.integrations.openai.agent import OpenAIAgent, OpenAICommerceAgent
+from agentfault.tools import ToolCall
 
 
 class _FakeCompletions:

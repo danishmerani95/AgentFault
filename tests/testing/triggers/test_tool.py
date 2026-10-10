@@ -1,5 +1,5 @@
-from cartspec.testing.triggers import AfterTool, BeforeTool
-from cartspec.tools import ToolCall
+from agentfault.testing.triggers import AfterTool, BeforeTool
+from agentfault.tools import ToolCall
 
 
 def test_before_tool_matches_only_its_tool() -> None:

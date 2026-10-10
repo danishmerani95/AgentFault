@@ -1,8 +1,8 @@
-from cartspec.agent import DeterministicCommerceAgent
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.testing import Scenario
-from cartspec.testing.assertions import MaxPriceAssertion
-from cartspec.tools import ToolRegistry
+from agentfault.agent import DeterministicCommerceAgent
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.testing import Scenario
+from agentfault.testing.assertions import MaxPriceAssertion
+from agentfault.tools import ToolRegistry
 from examples.basic_world import create_basic_world
 
 

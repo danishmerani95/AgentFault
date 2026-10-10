@@ -2,10 +2,10 @@ from typing import Any
 
 import pytest
 
-from cartspec.agent import Agent
-from cartspec.testing import Scenario, ScenarioRunner
-from cartspec.testing.runner import AgentRunner
-from cartspec.tools import (
+from agentfault.agent import Agent
+from agentfault.testing import Scenario, ScenarioRunner
+from agentfault.testing.runner import AgentRunner
+from agentfault.tools import (
     Tool,
     ToolCall,
     ToolExecutionFailure,

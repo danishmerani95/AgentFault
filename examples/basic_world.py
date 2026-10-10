@@ -1,4 +1,4 @@
-from cartspec.commerce import (
+from agentfault.commerce import (
     CommerceEnvironment,
     Inventory,
     Merchant,

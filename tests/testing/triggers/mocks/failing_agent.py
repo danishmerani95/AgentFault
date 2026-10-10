@@ -1,7 +1,7 @@
 from typing import Any
 
-from cartspec.agent.base import Agent
-from cartspec.tools.tool import ToolCall
+from agentfault.agent.base import Agent
+from agentfault.tools.tool import ToolCall
 
 
 class FailingAgent(Agent):

@@ -1,8 +1,8 @@
 from typing import Any
 
-from cartspec.agent.naive import NaiveCommerceAgent
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.tools.tool import ToolRegistry
+from agentfault.agent.naive import NaiveCommerceAgent
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.tools.tool import ToolRegistry
 from examples.basic_world import create_basic_world
 
 
