@@ -3,7 +3,7 @@ from typing import Any
 from cartspec.agent import DeterministicCommerceAgent
 from cartspec.commerce import create_commerce_tools
 from cartspec.testing import AgentRunner, Scenario, ScenarioRunner
-from cartspec.tools import Tool, ToolCall, ToolRegistry
+from cartspec.tools import Tool, ToolCall, ToolExecutor, ToolRegistry
 from examples.basic_world import create_basic_world
 from tests.testing.triggers.mocks import FailingAgent
 
@@ -142,6 +142,32 @@ def test_agent_runner_handles_tool_error() -> None:
 
     assert agent.call_count == 1
     assert agent_runner.trajectory == []
+
+
+class _FixedExecutor(ToolExecutor):
+    def __init__(self) -> None:
+        self.calls: list[ToolCall] = []
+
+    def execute(self, tool_call: ToolCall) -> str:
+        self.calls.append(tool_call)
+        return "executed"
+
+
+def test_agent_runner_uses_tool_executor_boundary() -> None:
+    agent = FailingAgent()
+    executor = _FixedExecutor()
+
+    agent_runner = AgentRunner(
+        agent=agent,
+        tool_executor=executor,
+    )
+
+    result = agent_runner.run()
+
+    assert result == "executed"
+    assert len(executor.calls) == 1
+    assert executor.calls[0].name == "failing_tool"
+    assert agent_runner.trajectory[0].observation == "executed"
 
 
 def test_scenario_runner_captures_tool_execution_failure() -> None:

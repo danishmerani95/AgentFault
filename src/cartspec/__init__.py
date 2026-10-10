@@ -21,7 +21,7 @@ from cartspec.testing import (
     ScenarioResult,
     Trigger,
 )
-from cartspec.tools import Tool, ToolCall, ToolRegistry
+from cartspec.tools import RegistryToolExecutor, Tool, ToolCall, ToolExecutor, ToolRegistry
 from cartspec.trajectory import TrajectoryStep
 
 __all__ = [
@@ -40,11 +40,13 @@ __all__ = [
     "Order",
     "Product",
     "Perturbation",
+    "RegistryToolExecutor",
     "Scenario",
     "ScenarioRunner",
     "ScenarioResult",
     "Tool",
     "ToolCall",
+    "ToolExecutor",
     "ToolRegistry",
     "TrajectoryStep",
     "Trigger",

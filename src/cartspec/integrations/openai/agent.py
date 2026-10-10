@@ -49,6 +49,7 @@ class OpenAICommerceAgent(Agent):
         ]
 
         self.previous_tool_call_id: str | None = None
+        self._awaiting_tool_result = False
 
     def next_action(self, observation: Any) -> ToolCall | None:
         def _serialize_observation(observation: Any) -> str:
@@ -63,7 +64,7 @@ class OpenAICommerceAgent(Agent):
                 )
             return json.dumps(observation)
 
-        if observation is not None:
+        if self._awaiting_tool_result:
             if self.previous_tool_call_id is None:
                 raise RuntimeError(
                     "Received a tool result without a previous tool call."
@@ -76,6 +77,7 @@ class OpenAICommerceAgent(Agent):
                     content=_serialize_observation(observation),
                 )
             )
+            self._awaiting_tool_result = False
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -83,18 +85,36 @@ class OpenAICommerceAgent(Agent):
             tools=self.tools,
         )
 
+        if not response.choices:
+            raise ValueError("OpenAI response did not include any choices.")
+
         message = response.choices[0].message
 
-        if not message.tool_calls:
+        tool_calls = message.tool_calls
+        if not tool_calls:
             return None
 
-        tool_call = message.tool_calls[0]
+        if len(tool_calls) > 1:
+            raise ValueError(
+                "OpenAICommerceAgent supports one tool call per response; "
+                f"received {len(tool_calls)}."
+            )
+
+        tool_call = tool_calls[0]
 
         if not isinstance(
             tool_call,
             ChatCompletionMessageFunctionToolCall,
         ):
             raise TypeError("Expected a function tool call.")
+
+        try:
+            arguments = json.loads(tool_call.function.arguments)
+        except json.JSONDecodeError as error:
+            raise ValueError("Tool call arguments must be valid JSON.") from error
+
+        if not isinstance(arguments, dict):
+            raise ValueError("Tool call arguments must be a JSON object.")
 
         self.messages.append(
             ChatCompletionAssistantMessageParam(
@@ -113,9 +133,10 @@ class OpenAICommerceAgent(Agent):
         )
 
         self.previous_tool_call_id = tool_call.id
+        self._awaiting_tool_result = True
 
         return ToolCall(
             id=tool_call.id,
             name=tool_call.function.name,
-            arguments=json.loads(tool_call.function.arguments),
+            arguments=arguments,
         )

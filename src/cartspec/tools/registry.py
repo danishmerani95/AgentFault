@@ -1,6 +1,6 @@
 from typing import Any
 
-from cartspec.tools import Tool, ToolCall
+from cartspec.tools.tool import Tool, ToolCall
 
 
 class ToolRegistry:

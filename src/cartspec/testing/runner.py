@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Any, Callable
 
 from cartspec.agent import Agent
-from cartspec.tools import ToolCall, ToolRegistry
+from cartspec.tools import RegistryToolExecutor, ToolCall, ToolExecutor, ToolRegistry
 from cartspec.trajectory import TrajectoryStep
 
 ToolExecutionHook = Callable[[ToolCall, Any], None]
@@ -14,13 +14,19 @@ class AgentRunner:
     def __init__(
         self,
         agent: Agent,
-        tool_registry: ToolRegistry,
+        tool_executor: ToolExecutor | None = None,
+        tool_registry: ToolRegistry | None = None,
         before_tool_execution: BeforeToolCallExecutionHook | None = None,
         on_tool_executed: ToolExecutionHook | None = None,
         on_tool_error: ToolErrorHook | None = None,
     ) -> None:
+        if tool_executor is None:
+            if tool_registry is None:
+                raise ValueError("AgentRunner requires a tool executor or registry.")
+            tool_executor = RegistryToolExecutor(tool_registry)
+
         self.agent = agent
-        self.tool_registry = tool_registry
+        self.tool_executor = tool_executor
         self.trajectory: list[TrajectoryStep] = []
         self.before_tool_execution = before_tool_execution
         self.on_tool_executed = on_tool_executed
@@ -38,7 +44,7 @@ class AgentRunner:
             try:
                 if self.before_tool_execution is not None:
                     self.before_tool_execution(tool_call)
-                observation = self.tool_registry.execute(tool_call)
+                observation = self.tool_executor.execute(tool_call)
             except Exception as error:
                 if self.on_tool_error is not None:
                     self.on_tool_error(tool_call, error)

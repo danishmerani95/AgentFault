@@ -1,11 +1,29 @@
 from typing import Any
 
 from cartspec.testing.assertion import AssertionResult, EvaluationContext
+from cartspec.testing.perturbations import ToolFailurePerturbation
 from cartspec.testing.runner import AgentRunner
 from cartspec.testing.scenario import Scenario
 from cartspec.testing.scenario_result import ScenarioResult
 from cartspec.testing.triggers import AfterTool, BeforeTool, Trigger
-from cartspec.tools.tool import ToolCall, ToolRegistry
+from cartspec.tools import RegistryToolExecutor, ToolCall, ToolExecutor, ToolRegistry
+
+
+class _PerturbableToolExecutor(ToolExecutor):
+    def __init__(self, tool_executor: ToolExecutor) -> None:
+        self.tool_executor = tool_executor
+        self.pending_failures: list[ToolFailurePerturbation] = []
+
+    def queue_failure(self, perturbation: ToolFailurePerturbation) -> None:
+        self.pending_failures.append(perturbation)
+
+    def execute(self, tool_call: ToolCall) -> Any:
+        for index, perturbation in enumerate(self.pending_failures):
+            if perturbation.matches(tool_call):
+                del self.pending_failures[index]
+                perturbation.apply(None)
+
+        return self.tool_executor.execute(tool_call)
 
 
 class ScenarioRunner:
@@ -16,13 +34,17 @@ class ScenarioRunner:
 
     def run(self, scenario: Scenario) -> ScenarioResult:
         execution_error: Exception | None = None
+        tool_executor = _PerturbableToolExecutor(RegistryToolExecutor(self.tool_registry))
 
         def apply_matching_perturbations(
             trigger_type: type[Trigger], tool_call: ToolCall
         ) -> None:
             for trigger, perturbation in scenario.perturbations:
                 if isinstance(trigger, trigger_type) and trigger.matches(tool_call):
-                    perturbation.apply(scenario.environment)
+                    if isinstance(perturbation, ToolFailurePerturbation):
+                        tool_executor.queue_failure(perturbation)
+                    else:
+                        perturbation.apply(scenario.environment)
 
         def before_tool_execution(tool_call: ToolCall) -> None:
             apply_matching_perturbations(BeforeTool, tool_call)
@@ -36,7 +58,7 @@ class ScenarioRunner:
 
         agent_runner = AgentRunner(
             agent=scenario.agent,
-            tool_registry=self.tool_registry,
+            tool_executor=tool_executor,
             before_tool_execution=before_tool_execution,
             on_tool_executed=on_tool_executed,
             on_tool_error=on_tool_error,

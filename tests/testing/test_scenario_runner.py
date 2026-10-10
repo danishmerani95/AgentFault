@@ -2,11 +2,16 @@ from cartspec.agent import DeterministicCommerceAgent, NaiveCommerceAgent
 from cartspec.commerce.tools import create_commerce_tools
 from cartspec.testing import Assertion, AssertionResult, EvaluationContext
 from cartspec.testing.assertions import MaxPriceAssertion, ProhibitedActionAssertion
-from cartspec.testing.perturbations import ChangeInventory, ChangePrice, FailTool
+from cartspec.testing.perturbations import (
+    ChangeInventory,
+    ChangePrice,
+    FailTool,
+    ToolFailurePerturbation,
+)
 from cartspec.testing.scenario import Scenario
-from cartspec.testing.scenario_runner import ScenarioRunner
+from cartspec.testing.scenario_runner import ScenarioRunner, _PerturbableToolExecutor
 from cartspec.testing.triggers import AfterTool, BeforeTool
-from cartspec.tools import ToolCall, ToolRegistry
+from cartspec.tools import RegistryToolExecutor, Tool, ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
 
 
@@ -322,6 +327,78 @@ def test_fail_tool_injects_error_without_executing_real_tool() -> None:
     assert result.assertions[0].passed is True
     assert result.trajectory == []
     assert world.carts == {}
+
+
+def test_after_tool_failure_perturbation_fails_next_matching_tool_execution() -> None:
+    world = create_basic_world()
+    registry = ToolRegistry(create_commerce_tools(world))
+    agent = NaiveCommerceAgent(query="headphones")
+    scenario = Scenario(
+        name="failed purchase",
+        agent=agent,
+        environment=world,
+        perturbations=[
+            (
+                AfterTool("get_offers_for_product"),
+                ToolFailurePerturbation(
+                    tool_name="purchase",
+                    message="Injected purchase failure.",
+                ),
+            ),
+        ],
+    )
+
+    result = ScenarioRunner(registry).run(scenario)
+
+    assert result.passed is False
+    assert isinstance(result.error, RuntimeError)
+    assert str(result.error) == "Injected purchase failure."
+    assert [step.tool_call.name for step in result.trajectory] == [
+        "search_products",
+        "get_offers_for_product",
+        "create_cart",
+        "add_to_cart",
+    ]
+    assert world.carts != {}
+    assert world.orders == {}
+
+
+def test_tool_failure_perturbation_is_consumed_after_one_match() -> None:
+    executions = 0
+
+    def purchase() -> str:
+        nonlocal executions
+        executions += 1
+        return "ok"
+
+    _ = create_basic_world()
+    registry = ToolRegistry(
+        [
+            Tool(
+                name="purchase",
+                description="Purchase test tool.",
+                function=purchase,
+            )
+        ]
+    )
+    executor = _PerturbableToolExecutor(RegistryToolExecutor(registry))
+    executor.queue_failure(
+        ToolFailurePerturbation(
+            tool_name="purchase",
+            message="Injected purchase failure.",
+        )
+    )
+    tool_call = ToolCall(name="purchase", arguments={})
+
+    try:
+        executor.execute(tool_call)
+    except RuntimeError as error:
+        assert str(error) == "Injected purchase failure."
+    else:
+        raise AssertionError("Expected the first purchase execution to fail.")
+
+    assert executor.execute(tool_call) == "ok"
+    assert executions == 1
 
 
 def test_multiple_perturbations_apply_after_the_same_tool() -> None:
