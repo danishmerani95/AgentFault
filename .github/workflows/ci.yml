@@ -64,5 +64,5 @@ jobs:
           print(f"Installed package: {installed_from}")
           PY
           agentfault --help
-          agentfault run examples.basic_scenario:build_scenario
+          PYTHONPATH="$GITHUB_WORKSPACE" agentfault run examples.basic_scenario:build_scenario
           pytest -q
