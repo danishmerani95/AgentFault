@@ -3,20 +3,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cartspec"
+name = "agentfault"
 version = "0.1.0"
-description = "Open-source testing infrastructure for autonomous commerce agents"
+description = "Open-source stateful reliability testing for AI agents"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [
-    { name = "CartSpec Contributors" }
+    { name = "AgentFault Contributors" }
 ]
 keywords = [
     "ai",
     "agents",
-    "agentic-commerce",
-    "commerce",
+    "agent-reliability",
+    "failure-injection",
     "testing",
     "evaluation",
     "reliability"
@@ -42,11 +42,10 @@ dev = [
 ]
 
 [project.scripts]
-cartspec = "cartspec.cli:main"
-agentfault = "cartspec.cli:main"
+agentfault = "agentfault.cli:main"
 
 [project.entry-points.pytest11]
-agentfault = "cartspec.pytest_plugin"
+agentfault = "agentfault.pytest_plugin"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -61,4 +60,4 @@ python_version = "3.12"
 strict = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cartspec"]
+packages = ["src/agentfault"]

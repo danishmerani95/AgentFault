@@ -1,4 +1,4 @@
-from cartspec.testing.perturbations import ChangePrice
+from agentfault.testing.perturbations import ChangePrice
 from examples.basic_world import create_basic_world
 
 

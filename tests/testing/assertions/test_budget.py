@@ -1,6 +1,6 @@
-from cartspec.commerce import Order
-from cartspec.testing import EvaluationContext
-from cartspec.testing.assertions.budget import MaxPriceAssertion
+from agentfault.commerce import Order
+from agentfault.testing import EvaluationContext
+from agentfault.testing.assertions.budget import MaxPriceAssertion
 from examples.basic_world import create_basic_world
 
 

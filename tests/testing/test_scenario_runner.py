@@ -1,17 +1,17 @@
-from cartspec.agent import DeterministicCommerceAgent, NaiveCommerceAgent
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.testing import Assertion, AssertionResult, EvaluationContext
-from cartspec.testing.assertions import MaxPriceAssertion, ProhibitedActionAssertion
-from cartspec.testing.perturbations import (
+from agentfault.agent import DeterministicCommerceAgent, NaiveCommerceAgent
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.testing import Assertion, AssertionResult, EvaluationContext
+from agentfault.testing.assertions import MaxPriceAssertion, ProhibitedActionAssertion
+from agentfault.testing.perturbations import (
     ChangeInventory,
     ChangePrice,
     FailTool,
     ToolFailurePerturbation,
 )
-from cartspec.testing.scenario import Scenario
-from cartspec.testing.scenario_runner import ScenarioRunner, _PerturbableToolExecutor
-from cartspec.testing.triggers import AfterTool, BeforeTool
-from cartspec.tools import RegistryToolExecutor, Tool, ToolCall, ToolRegistry
+from agentfault.testing.scenario import Scenario
+from agentfault.testing.scenario_runner import ScenarioRunner, _PerturbableToolExecutor
+from agentfault.testing.triggers import AfterTool, BeforeTool
+from agentfault.tools import RegistryToolExecutor, Tool, ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
 
 

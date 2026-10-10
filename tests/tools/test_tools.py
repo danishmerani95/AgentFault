@@ -1,5 +1,5 @@
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.tools.tool import ToolCall, ToolRegistry
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.tools.tool import ToolCall, ToolRegistry
 from examples.basic_world import create_basic_world
 
 

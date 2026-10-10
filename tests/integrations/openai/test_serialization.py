@@ -1,6 +1,6 @@
 import json
 
-from cartspec.commerce import Product
+from agentfault.commerce import Product
 
 
 def test_product_serializes_to_json() -> None:

@@ -1,11 +1,11 @@
 import json
 from typing import Any
 
-from cartspec.agent import DeterministicCommerceAgent
-from cartspec.cli import main
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.testing import Assertion, AssertionResult, EvaluationContext, Scenario
-from cartspec.tools import ToolRegistry
+from agentfault.agent import DeterministicCommerceAgent
+from agentfault.cli import main
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.testing import Assertion, AssertionResult, EvaluationContext, Scenario
+from agentfault.tools import ToolRegistry
 from examples.basic_world import create_basic_world
 
 

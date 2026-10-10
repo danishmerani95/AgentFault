@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 
-from cartspec.commerce.tools import create_commerce_tools
-from cartspec.integrations.openai.agent import OpenAICommerceAgent
-from cartspec.integrations.openai.tools import to_openai_tools
-from cartspec.testing.runner import AgentRunner
-from cartspec.tools import ToolRegistry
+from agentfault.commerce.tools import create_commerce_tools
+from agentfault.integrations.openai.agent import OpenAICommerceAgent
+from agentfault.integrations.openai.tools import to_openai_tools
+from agentfault.testing.runner import AgentRunner
+from agentfault.tools import ToolRegistry
 from examples.basic_world import create_basic_world
 
 load_dotenv()
@@ -32,7 +32,7 @@ def main() -> None:
 
     result = runner.run()
 
-    print("\n=== CartSpec Run ===")
+    print("\n=== AgentFault Run ===")
 
     for index, step in enumerate(runner.trajectory, start=1):
         print(f"\n--- Step {index} ---")

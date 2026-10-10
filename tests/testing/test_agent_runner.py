@@ -1,9 +1,9 @@
 from typing import Any
 
-from cartspec.agent import DeterministicCommerceAgent
-from cartspec.commerce import create_commerce_tools
-from cartspec.testing import AgentRunner, Scenario, ScenarioRunner
-from cartspec.tools import Tool, ToolCall, ToolExecutor, ToolRegistry
+from agentfault.agent import DeterministicCommerceAgent
+from agentfault.commerce import create_commerce_tools
+from agentfault.testing import AgentRunner, Scenario, ScenarioRunner
+from agentfault.tools import Tool, ToolCall, ToolExecutor, ToolRegistry
 from examples.basic_world import create_basic_world
 from tests.testing.triggers.mocks import FailingAgent
 

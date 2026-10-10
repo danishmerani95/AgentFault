@@ -1,4 +1,4 @@
-from cartspec.tools.tool import Tool
+from agentfault.tools.tool import Tool
 
 
 def add_to_cart(

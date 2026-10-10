@@ -3,13 +3,13 @@ import inspect
 
 import pytest
 
-import cartspec.testing.runner
-import cartspec.testing.scenario
-from cartspec.testing import Perturbation, Scenario, ScenarioResult, Trigger
-from cartspec.testing.assertion import AssertionResult
-from cartspec.testing.perturbations import ChangePrice
-from cartspec.testing.triggers import AfterTool
-from cartspec.trajectory import TrajectoryStep
+import agentfault.testing.runner
+import agentfault.testing.scenario
+from agentfault.testing import Perturbation, Scenario, ScenarioResult, Trigger
+from agentfault.testing.assertion import AssertionResult
+from agentfault.testing.perturbations import ChangePrice
+from agentfault.testing.triggers import AfterTool
+from agentfault.trajectory import TrajectoryStep
 
 
 def test_scenario_construction() -> None:
@@ -59,7 +59,7 @@ def test_trigger_is_abstract() -> None:
 
 
 def test_agent_runner_remains_generic() -> None:
-    module = ast.parse(inspect.getsource(cartspec.testing.runner))
+    module = ast.parse(inspect.getsource(agentfault.testing.runner))
     referenced_names = {
         node.id for node in ast.walk(module) if isinstance(node, ast.Name)
     }
@@ -77,7 +77,7 @@ def test_agent_runner_remains_generic() -> None:
 
 
 def test_scenario_remains_declarative_and_does_not_own_tool_registry() -> None:
-    module = ast.parse(inspect.getsource(cartspec.testing.scenario))
+    module = ast.parse(inspect.getsource(agentfault.testing.scenario))
     scenario_definition = next(
         node
         for node in module.body
@@ -88,4 +88,4 @@ def test_scenario_remains_declarative_and_does_not_own_tool_registry() -> None:
         isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
         for node in scenario_definition.body
     )
-    assert "ToolRegistry" not in inspect.getsource(cartspec.testing.scenario)
+    assert "ToolRegistry" not in inspect.getsource(agentfault.testing.scenario)

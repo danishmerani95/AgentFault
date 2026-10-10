@@ -1,6 +1,6 @@
 import pytest
 
-from cartspec.testing import ScenarioResult
+from agentfault.testing import ScenarioResult
 
 
 @pytest.mark.agentfault("examples.basic_scenario:build_scenario")

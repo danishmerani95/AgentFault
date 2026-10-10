@@ -28,16 +28,14 @@ CLI exit codes:
 - `1`: the scenario ran but did not satisfy its assertions.
 - `2`: the factory could not be loaded or execution raised an error.
 
-The existing `cartspec` console command remains available as an alias.
-
 ## Use scenarios from pytest
 
-The `cartspec.pytest_plugin` plugin is registered with pytest when AgentFault is installed. Mark a test with a factory and request the `agentfault_result` fixture:
+The `agentfault.pytest_plugin` plugin is registered with pytest when AgentFault is installed. Mark a test with a factory and request the `agentfault_result` fixture:
 
 ```python
 import pytest
 
-from cartspec.testing import ScenarioResult
+from agentfault.testing import ScenarioResult
 
 
 @pytest.mark.agentfault("examples.basic_scenario:build_scenario")
