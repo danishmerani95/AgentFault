@@ -43,6 +43,10 @@ dev = [
 
 [project.scripts]
 cartspec = "cartspec.cli:main"
+agentfault = "cartspec.cli:main"
+
+[project.entry-points.pytest11]
+agentfault = "cartspec.pytest_plugin"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
