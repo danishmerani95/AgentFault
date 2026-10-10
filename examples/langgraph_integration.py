@@ -82,7 +82,7 @@ def build_scenario() -> tuple[Scenario, LangGraphScenarioRunner]:
 
         if isinstance(last_message, ToolMessage):
             if "status:active" in str(last_message.content):
-                # It has stale information, so re-check before doing anything consequential.
+                # This result may be stale, so re-check before consequential actions.
                 tool_call = {
                     "name": "lookup_account",
                     "args": {"account_id": "acct-test"},
@@ -95,7 +95,9 @@ def build_scenario() -> tuple[Scenario, LangGraphScenarioRunner]:
                 return {
                     "messages": [
                         AIMessage(
-                            content="The account is suspended; I will not issue a refund."
+                            content=(
+                                "The account is suspended; I will not issue a refund."
+                            )
                         )
                     ]
                 }
