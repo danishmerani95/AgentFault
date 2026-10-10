@@ -4,9 +4,11 @@
 
 AgentFault provides scenario-based reliability testing for tool-using agents. Scenarios combine an agent, an environment, controlled perturbations, and assertions over behavior.
 
-## Run a scenario from the CLI
+> **Project status: Alpha.** APIs and scenario authoring conventions may change before the first stable release.
 
-A scenario factory is a Python callable written as `module.path:function_name`. It must return a `(Scenario, ToolRegistry)` tuple.
+## Quick start
+
+Requirements: Python 3.12 or newer and [uv](https://docs.astral.sh/uv/).
 
 From the repository root:
 
@@ -14,6 +16,8 @@ From the repository root:
 uv sync --extra dev
 uv run agentfault run examples.basic_scenario:build_scenario
 ```
+
+A scenario factory is a Python callable written as `module.path:function_name`. It must return a `(Scenario, ToolRegistry)` tuple.
 
 Print a machine-readable summary or change the maximum number of tool executions:
 
@@ -90,3 +94,8 @@ def test_checkout(agentfault_result: ScenarioResult) -> None:
 ```
 
 The CLI and pytest fixture both use the same `ScenarioRunner`; pytest integration does not introduce a separate execution path. A factory should create a fresh scenario and environment each time it is called.
+
+## Further information
+
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
