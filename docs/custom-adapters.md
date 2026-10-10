@@ -51,9 +51,8 @@ AgentFault provides a `LangGraphToolCallInterceptor` for LangGraph's native `Too
 Install LangGraph separately (it remains an optional dependency):
 
 ```bash
-python -m pip install "langgraph>=1.0,<2"
-uv run python -m examples.langgraph_integration
-uv run pytest tests/examples/test_langgraph_integration.py
+uv run --with "langgraph>=1.0,<2" python -m examples.langgraph_integration
+uv run --with "langgraph>=1.0,<2" pytest tests/examples/test_langgraph_integration.py
 ```
 
 The runnable example uses a deterministic scripted graph node rather than a live LLM, so it does not need an API key. It looks up an account, changes its status to suspended after the lookup, then has the graph re-check the account. The test asserts the refund tool is never called.
