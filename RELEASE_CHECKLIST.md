@@ -1,13 +1,13 @@
 # First Release Checklist
 
-Use this checklist before publishing the first public AgentFault release. Do not publish automatically from this checklist; the repository visibility, license, version, and package destination are deliberate release decisions.
+Use this checklist before publishing the first public AgentFault release. Do not publish automatically from this checklist; repository visibility, package identity, version, and destination are deliberate release decisions.
 
 ## Project identity and license
 
 - [ ] Confirm the repository is intended to be public before publishing.
 - [ ] Resolve possible name confusion before release. An initial search found an existing product using the AgentFault name at [agentfault.com](https://agentfault.com/) and multiple public GitHub repositories named `agentfault`, including [vgprakul/agentfault](https://github.com/vgprakul/agentfault) and [GIFTEDLOV/agentfault](https://github.com/GIFTEDLOV/agentfault). Decide whether the name is sufficiently differentiated or should change.
-- [ ] Verify the PyPI distribution name `agentfault` directly against PyPI before upload; web search alone did not conclusively establish availability.
-- [ ] Explicitly confirm the chosen license. `LICENSE` currently contains the MIT License; keep the package metadata consistent with it unless the project owner chooses a different license.
+- [ ] Verify the PyPI distribution name `agentfault` directly against PyPI before upload; availability has not yet been conclusively established.
+- [x] License decision confirmed: use the MIT License. Keep the `LICENSE` file and package metadata consistent with MIT.
 - [ ] Review ownership and copyright information in `LICENSE`.
 - [ ] Review the README, contributor guide, changelog, and example scenario commands for accuracy.
 
