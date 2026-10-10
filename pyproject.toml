@@ -41,6 +41,12 @@ dev = [
     "mypy>=1.17,<2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/danishmerani95/AgentFault"
+Repository = "https://github.com/danishmerani95/AgentFault"
+Issues = "https://github.com/danishmerani95/AgentFault/issues"
+Changelog = "https://github.com/danishmerani95/AgentFault/blob/main/CHANGELOG.md"
+
 [project.scripts]
 agentfault = "agentfault.cli:main"
 
