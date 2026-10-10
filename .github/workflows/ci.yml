@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install project and development dependencies
+        run: uv sync --locked --extra dev
+
+      - name: Run tests
+        run: uv run --locked pytest
+
+      - name: Lint
+        run: uv run --locked ruff check .
+
+      - name: Type-check
+        run: uv run --locked mypy src/agentfault
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Install wheel in a clean environment and smoke-test it
+        shell: bash
+        run: |
+          python -m venv .venv-wheel-smoke
+          source .venv-wheel-smoke/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl "pytest>=8.3,<9"
+          python - <<'PY'
+          from pathlib import Path
+          import agentfault
+
+          installed_from = Path(agentfault.__file__).resolve()
+          assert "site-packages" in str(installed_from), installed_from
+          print(f"Installed package: {installed_from}")
+          PY
+          agentfault --help
+          pytest -q
