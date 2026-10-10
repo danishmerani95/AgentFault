@@ -141,9 +141,8 @@ The example above shows the integration seam; names such as `SuspendAccount`, `t
 Try the complete deterministic example (no LLM API key required):
 
 ```bash
-python -m pip install "langgraph>=1.0,<2"
-uv run python -m examples.langgraph_integration
-uv run pytest tests/examples/test_langgraph_integration.py
+uv run --with "langgraph>=1.0,<2" python -m examples.langgraph_integration
+uv run --with "langgraph>=1.0,<2" pytest tests/examples/test_langgraph_integration.py
 ```
 
 It uses a real LangGraph `StateGraph` and `ToolNode`, with a scripted decision node so the test stays deterministic. It demonstrates interception and a state change; it does **not** evaluate a live LLM's reasoning quality.
