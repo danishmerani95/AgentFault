@@ -106,7 +106,17 @@ uv run python -m examples.custom_adapter
 uv run pytest tests/examples/test_custom_adapter.py
 ```
 
-See [the custom adapter guide](docs/custom-adapters.md) for the contract, limitations, and notes for OpenAI SDK, LangChain, LangGraph, and Claude. LangChain, LangGraph, and Claude adapters are not built in yet; integrations must preserve AgentFault’s control over individual tool executions for mid-run perturbations to work.
+See [the custom adapter guide](docs/custom-adapters.md) for the contract, limitations, and notes for OpenAI SDK, LangChain, LangGraph, and Claude.
+
+For LangGraph, AgentFault now includes a `ToolNode(wrap_tool_call=...)` interceptor and a deterministic example:
+
+```bash
+python -m pip install "langgraph>=1.0,<2"
+uv run python -m examples.langgraph_integration
+uv run pytest tests/examples/test_langgraph_integration.py
+```
+
+This initial LangGraph integration supports synchronous `invoke` and sequential tool calls; parallel and async execution paths are not yet supported by the adapter.
 
 ## Further information
 
