@@ -5,6 +5,7 @@ compatible LangGraph release in applications that use this integration.
 """
 
 from collections.abc import Callable, Mapping
+from importlib import import_module
 from typing import Any
 
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
@@ -70,11 +71,10 @@ class LangGraphToolCallInterceptor:
             # ToolNode's wrapper runs outside its internal tool-error handler.
             # Return a synthetic error ToolMessage so the graph can observe the
             # failure and decide whether to retry, just as with a real tool error.
-            from langchain_core.messages import ToolMessage
-
+            tool_message_type = import_module("langchain_core.messages").ToolMessage
             error = RuntimeError(pending_failure.message)
             self._record_failure(tool_call, error)
-            return ToolMessage(
+            return tool_message_type(
                 content=pending_failure.message,
                 tool_call_id=tool_call.id or "",
                 name=tool_call.name,
