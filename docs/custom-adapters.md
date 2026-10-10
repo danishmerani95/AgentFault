@@ -46,12 +46,26 @@ A LangChain adapter can translate an `AIMessage` with tool calls into `ToolCall`
 
 ### LangGraph
 
-LangGraph often owns the full state graph and tool execution loop. To preserve mid-run perturbation, the graph needs to pause after a tool-call decision and route execution through AgentFault (or use a custom tool-execution node that delegates to AgentFault’s executor). Wrapping only a completed `graph.invoke(...)` call is insufficient for interventions between tool calls.
+AgentFault now provides an interceptor for LangGraph's `ToolNode(wrap_tool_call=...)` hook. It records tool calls, applies `BeforeTool` / `AfterTool` perturbations around individual executions, and lets the graph continue with its native `ToolMessage` observations. `LangGraphScenarioRunner` then evaluates the scenario assertions against that recorded trajectory.
+
+Install LangGraph in the test environment (it is not a core AgentFault dependency):
+
+```bash
+python -m pip install "langgraph>=1.0,<2"
+uv run python -m examples.langgraph_integration
+uv run pytest tests/examples/test_langgraph_integration.py
+```
+
+The runnable example uses a deterministic scripted graph node instead of a live LLM, so it needs no model API key. It looks up an account, AgentFault changes the account to suspended, the graph rechecks the account through its real `ToolNode`, and the assertion verifies that no refund tool was called.
+
+For an existing graph, pass the interceptor to the `ToolNode` that executes the tools under test, then use `LangGraphScenarioRunner(scenario, interceptor)` around the compiled graph. The graph must route tool calls through that node; wrapping only a completed `graph.invoke(...)` call cannot inject a change between tool calls.
+
+This first integration targets synchronous `invoke` and sequential tool calls. Keep model outputs to one tool call at a time for deterministic interventions. Parallel tool calls, async `ainvoke`, and LangGraph's alternate tool-execution paths require additional handling and are not claimed as supported yet.
 
 ## Important constraints
 
 - The adapter and registered tool names must agree exactly.
-- Only calls executed via AgentFault’s tool executor are present in its trajectory and can be intercepted by `BeforeTool` / `AfterTool` perturbations.
-- If the framework runs tools internally, uses parallel tool calls, maintains a complex graph state, or emits nonstandard tool observations, the adapter must explicitly handle those semantics. The current core loop supports one proposed call at a time.
+- Only tool calls that pass through AgentFault's interceptor (or another explicitly supported executor path) are present in its trajectory and can be intercepted by `BeforeTool` / `AfterTool` perturbations.
+- The LangGraph adapter records sequential synchronous executions. Parallel tool calls, async `ainvoke`, and tools executed outside the configured `ToolNode` are not yet covered.
 - AgentFault does not automatically turn arbitrary production tool functions into safe test tools. Use isolated test dependencies and avoid live side effects.
 - A custom adapter is a small integration layer, not proof that every version or execution mode of every framework is supported. Framework-specific adapters need integration tests against their supported versions.
