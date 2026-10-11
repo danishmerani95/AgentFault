@@ -57,5 +57,7 @@ def test_deterministic_agent_records_trajectory() -> None:
         "check_inventory",
         "create_cart",
         "add_to_cart",
+        "get_offer",
+        "check_inventory",
         "purchase",
     ]
