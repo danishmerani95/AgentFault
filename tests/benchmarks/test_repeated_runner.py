@@ -106,7 +106,7 @@ def test_any_invalid_repetition_withholds_mean_and_stddev_but_keeps_error_count(
     assert result.score_mean is None
     assert result.score_stddev is None
     assert result.error_count == 1
-    assert result.per_case_pass_rate == {"ACT-001": 2 / 3}
+    assert result.per_case_pass_rate == {"ACT-001": 0.6667}
     assert result.pass_k == 0.0
 
 
