@@ -2,6 +2,7 @@
 
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
+from agentfault.testing.assertion import Assertion
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -51,7 +52,9 @@ def _case(
 ) -> tuple[Scenario, ToolRegistry]:
     world = SupportWorld(account_status=account_status, order_status=order_status)
     tools = _tools(world)
-    assertions = [CollectionLengthAssertion("refunds", expected_refunds)]
+    assertions: list[Assertion] = [
+        CollectionLengthAssertion("refunds", expected_refunds)
+    ]
     if forbid_refund_attempt:
         assertions.append(NoActionAttemptedAssertion("issue_refund"))
     perturbations = (
