@@ -45,6 +45,11 @@ from agentfault.testing import Scenario, ScenarioRunner
 from agentfault.testing.assertions import MaxPriceAssertion
 from agentfault.testing.perturbations import ChangePrice
 from agentfault.testing.triggers import AfterTool
+from agentfault.tools import ToolRegistry
+
+# Supply these from your application or a test fixture:
+# agent_under_test, test_environment, and the Tool objects.
+tool_registry = ToolRegistry(test_tools)
 
 scenario = Scenario(
     name="price changes during checkout",
