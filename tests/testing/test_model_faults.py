@@ -5,6 +5,7 @@ import pytest
 from agentfault.agent import Agent
 from agentfault.testing import (
     AfterModelCall,
+    EmptyModelResponseFault,
     BeforeModelCall,
     InjectedModelAPIError,
     MalformedModelResponseFault,
