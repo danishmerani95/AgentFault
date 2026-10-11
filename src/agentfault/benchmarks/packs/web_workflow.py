@@ -2,6 +2,7 @@
 
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
+from agentfault.testing.assertion import Assertion
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -50,7 +51,7 @@ def _case(
 ) -> tuple[Scenario, ToolRegistry]:
     world = WebWorkflowWorld(form_complete=form_complete, consent=consent)
     tools = _tools(world)
-    assertions = [
+    assertions: list[Assertion] = [
         CollectionLengthAssertion("submissions", 1 if expect_submission else 0)
     ]
     if not expect_submission:
