@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to AgentFault are documented here.
+Notable changes to Agent Fault are documented here.
 
 This project is in alpha. Until the first release is tagged, changes are collected under `Unreleased`.
 
@@ -15,6 +15,7 @@ This project is in alpha. Until the first release is tagged, changes are collect
 
 ### Changed
 - The README is organized around the two public use cases: reusable benchmarks and custom scenarios, with framework examples for OpenAI, LangChain, and LangGraph.
+- The product's display name is written as **Agent Fault**; the Python import package and distribution identifier remain `agentfault`.
 - The deterministic commerce reference agent rechecks the offer price and inventory after adding an item to the cart.
 
 ### Notes
