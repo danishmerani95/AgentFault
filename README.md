@@ -110,6 +110,8 @@ See [the custom adapter guide](docs/custom-adapters.md) for the contract, limita
 
 ## Further information
 
+- [Scenario pack contract](docs/scenario-pack-contract.md) — proposed reusable schema and run/result semantics
+- [Buying Agent v1 suite](docs/buying-agent-v1.md) — candidate scenarios, assertions, scoring, and release gates
 - [Custom adapter guide](docs/custom-adapters.md)
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
