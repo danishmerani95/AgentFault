@@ -3,6 +3,7 @@
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Assertion, AssertionResult, EvaluationContext, Scenario
 from agentfault.testing.assertions import NoActionAttemptedAssertion
+from agentfault.testing.scenario import PerturbationSchedule
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
 from agentfault.tools import Tool, ToolRegistry
