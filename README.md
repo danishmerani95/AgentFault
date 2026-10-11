@@ -1,8 +1,8 @@
-# AgentFault
+# Agent Fault
 
 **Break the world around your agent. Verify its behavior.**
 
-AgentFault tests tool-using AI agents against changing conditions: a price rises, inventory disappears, an account is suspended, or a tool fails while the agent is working.
+Agent Fault tests tool-using AI agents against changing conditions: a price rises, inventory disappears, an account is suspended, or a tool fails while the agent is working.
 
 It offers two APIs over the same stateful testing engine.
 
