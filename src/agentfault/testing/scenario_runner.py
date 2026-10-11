@@ -97,14 +97,15 @@ class ScenarioRunner:
         final_observation: Any = None
         terminal_error: Exception | None = None
         model_call_executor = getattr(scenario.agent, "model_call_executor", None)
-        if scenario.model_faults:
-            if not isinstance(model_call_executor, ModelCallExecutor):
-                terminal_error = RuntimeError(
-                    "Scenario has model_faults, but the agent must expose a "
-                    "ModelCallExecutor and route model-client calls through it."
-                )
-            else:
-                model_call_executor.configure(scenario.model_faults)
+        if isinstance(model_call_executor, ModelCallExecutor):
+            # Reset schedules for every scenario, including an empty list, so
+            # faults cannot leak between runs if an adapter instance is reused.
+            model_call_executor.configure(scenario.model_faults)
+        elif scenario.model_faults:
+            terminal_error = RuntimeError(
+                "Scenario has model_faults, but the agent must expose a "
+                "ModelCallExecutor and route model-client calls through it."
+            )
 
         if terminal_error is None:
             try:
