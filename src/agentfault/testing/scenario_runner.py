@@ -6,7 +6,6 @@ from agentfault.testing.perturbations import ToolFailurePerturbation
 from agentfault.testing.runner import AgentRunner
 from agentfault.testing.scenario import FaultSchedule, Scenario
 from agentfault.testing.scenario_result import ScenarioResult
-from agentfault.testing.tools import Trigger
 from agentfault.tools import (
     RegistryToolExecutor,
     ToolCall,
