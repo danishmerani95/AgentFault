@@ -7,6 +7,7 @@ from agentfault.tools import Tool, ToolRegistry
 
 AgentFactory: TypeAlias = Callable[[str, list[Tool]], Agent]
 CaseFactory: TypeAlias = Callable[[AgentFactory], tuple[Scenario, ToolRegistry]]
+ScenarioExecutor: TypeAlias = Callable[[Scenario, ToolRegistry, int], ScenarioResult]
 CaseStatus: TypeAlias = Literal["passed", "failed", "error"]
 
 

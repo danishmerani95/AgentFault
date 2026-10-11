@@ -4,6 +4,7 @@ from agentfault.benchmarks.models import (
     BenchmarkCaseResult,
     BenchmarkResult,
     BenchmarkSuite,
+    ScenarioExecutor,
 )
 from agentfault.benchmarks.runner import BenchmarkRunner
 
@@ -14,4 +15,5 @@ __all__ = [
     "BenchmarkResult",
     "BenchmarkRunner",
     "BenchmarkSuite",
+    "ScenarioExecutor",
 ]

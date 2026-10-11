@@ -77,6 +77,54 @@ If any case has an execution error, the suite is incomplete and its score is una
 
 Repeated evaluation should be used for non-deterministic model-backed agents; a single result is only one observation of their behavior. Record the model/provider version, system prompt, tool schemas, framework versions, and agent configuration alongside each run. The same score does not imply equivalent general capability across suites, prompts, or domains.
 
+## Run benchmarks with your framework
+
+All four repository examples can select any of the six suite IDs using `AGENTFAULT_BENCHMARK_SUITE`:
+
+`buying-agent`, `customer-support-agent`, `research-agent`, `data-analysis-agent`, `software-engineering-agent`, or `web-workflow-agent`.
+
+### OpenAI
+
+Uses the built-in OpenAI Chat Completions adapter; Agent Fault executes the registered tools:
+
+```bash
+export OPENAI_API_KEY=...
+export AGENTFAULT_BENCHMARK_SUITE=customer-support-agent
+uv run python -m examples.openai_benchmark
+```
+
+### LangChain
+
+Adapts a LangChain chat model to Agent Fault's single-tool Agent contract. Agent Fault owns tool execution:
+
+```bash
+export OPENAI_API_KEY=...
+export AGENTFAULT_BENCHMARK_SUITE=research-agent
+uv run --with "langchain-openai>=0.3,<2" python -m examples.langchain_benchmark
+```
+
+### LangGraph
+
+Uses the new `scenario_executor` extension to let the compiled LangGraph and `ToolNode` own the tool loop. The native interceptor records and perturbs the configured tool calls:
+
+```bash
+export OPENAI_API_KEY=...
+export AGENTFAULT_BENCHMARK_SUITE=web-workflow-agent
+uv run --with "langchain-openai>=0.3,<2" --with "langgraph>=1.0,<2" python -m examples.langgraph_benchmark
+```
+
+### Claude (Anthropic)
+
+Uses Claude Messages API tool-use/tool-result blocks, while Agent Fault executes the returned calls inside each synthetic scenario:
+
+```bash
+export ANTHROPIC_API_KEY=...
+export AGENTFAULT_BENCHMARK_SUITE=software-engineering-agent
+uv run --with "anthropic>=0.50,<1" python -m examples.claude_benchmark
+```
+
+Each command makes external model API requests and may incur provider charges, but the benchmark tools point at synthetic in-memory environments. The LangChain, LangGraph, and Claude scripts have offline tests using fake model/client responses; no API key is needed for CI. The LangGraph example is native to the tool-execution loop, unlike the generic Agent adapter examples.
+
 ## External benchmark references
 
 - [τ-bench](https://arxiv.org/abs/2406.12045) explores policy-aware tool-agent interactions and repeated-trial reliability.

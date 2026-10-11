@@ -4,6 +4,7 @@ from agentfault.benchmarks.models import (
     CaseStatus,
     BenchmarkResult,
     BenchmarkSuite,
+    ScenarioExecutor,
 )
 from agentfault.testing import ScenarioRunner
 
@@ -22,6 +23,7 @@ class BenchmarkRunner:
         agent_factory: AgentFactory,
         *,
         agent_name: str = "custom-agent",
+        scenario_executor: ScenarioExecutor | None = None,
     ) -> BenchmarkResult:
         """Run all cases with fresh agent/environment instances.
 
@@ -36,10 +38,15 @@ class BenchmarkRunner:
         for case in suite.cases:
             try:
                 scenario, registry = case.build(agent_factory)
-                scenario_result = ScenarioRunner(
-                    registry,
-                    max_steps=self.max_steps,
-                ).run(scenario)
+                if scenario_executor is None:
+                    scenario_result = ScenarioRunner(
+                        registry,
+                        max_steps=self.max_steps,
+                    ).run(scenario)
+                else:
+                    scenario_result = scenario_executor(
+                        scenario, registry, self.max_steps
+                    )
             except Exception as error:
                 results.append(
                     BenchmarkCaseResult(

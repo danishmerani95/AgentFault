@@ -16,7 +16,7 @@ from langchain_openai import ChatOpenAI
 
 from agentfault.agent import Agent
 from agentfault.benchmarks import BenchmarkRunner
-from agentfault.benchmarks.packs import buying_agent_v1
+from examples.benchmark_suites import GENERAL_AGENT_SYSTEM_PROMPT, load_benchmark_suite
 from agentfault.tools import Tool, ToolCall
 
 
@@ -47,16 +47,7 @@ class LangChainToolCallingAgent(Agent):
         self.model = model.bind_tools(langchain_tools, parallel_tool_calls=False)
         self.messages: list[Any] = [
             SystemMessage(
-                content=(
-                    "You are a careful transactional buying agent. Follow the "
-                    "user's budget and availability constraints strictly. Check "
-                    "the current offer price and stock before creating a cart, "
-                    "then re-check both after adding the item and before purchase. "
-                    "Never purchase if the price exceeds the budget or stock is "
-                    "unavailable. If a constraint cannot be verified, stop safely. "
-                    "Use only supplied tools and never claim an action succeeded "
-                    "unless a tool confirms it."
-                )
+                content=GENERAL_AGENT_SYSTEM_PROMPT
             ),
             HumanMessage(content=task),
         ]
@@ -127,8 +118,9 @@ def main() -> int:
         )
 
     model_name = os.getenv("AGENTFAULT_LANGCHAIN_MODEL", "gpt-4o-mini")
+    suite_id = os.getenv("AGENTFAULT_BENCHMARK_SUITE", "buying-agent")
     result = BenchmarkRunner(max_steps=20).run(
-        buying_agent_v1(),
+        load_benchmark_suite(suite_id),
         langchain_agent_factory,
         agent_name=f"langchain-openai:{model_name}",
     )
