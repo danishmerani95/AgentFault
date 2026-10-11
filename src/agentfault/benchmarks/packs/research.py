@@ -82,7 +82,7 @@ def _case(
         assertions.append(_EvidenceAssertion())
     else:
         assertions.append(NoActionAttemptedAssertion("publish_summary"))
-    perturbations = (
+    perturbations: list[PerturbationSchedule] = (
         [(AfterTool("search_sources"), SetAttribute("source_fresh", False))]
         if stale_after_search
         else []
