@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "agentfault"
 version = "0.1.0"
-description = "Open-source stateful reliability testing for AI agents"
+description = "Agent Fault: open-source stateful reliability testing for AI agents"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [
-    { name = "AgentFault Contributors" }
+    { name = "Agent Fault Contributors" }
 ]
 keywords = [
     "ai",
