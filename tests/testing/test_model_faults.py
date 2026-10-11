@@ -6,7 +6,6 @@ from agentfault.agent import Agent
 from agentfault.testing import (
     AfterModelCall,
     BeforeModelCall,
-    EmptyModelResponseFault,
     InjectedModelAPIError,
     MalformedModelResponseFault,
     ModelCallExecutor,
@@ -39,7 +38,7 @@ def test_model_call_executor_faults_before_the_selected_call_once() -> None:
 
 def test_model_call_executor_can_replace_a_response_after_model_returns() -> None:
     executor = ModelCallExecutor(
-        [(AfterModelCall(call_number=1), MalformedModelResponseFault("invalid")]]
+        [(AfterModelCall(call_number=1), MalformedModelResponseFault("invalid"))]
     )
 
     first = executor.execute(lambda: {"choices": []})
@@ -48,6 +47,14 @@ def test_model_call_executor_can_replace_a_response_after_model_returns() -> Non
     assert first == "invalid"
     assert second == {"choices": ["valid"]}
 
+
+
+def test_empty_model_response_fault_returns_none() -> None:
+    executor = ModelCallExecutor(
+        [(AfterModelCall(1), EmptyModelResponseFault())]
+    )
+
+    assert executor.execute(lambda: "non-empty") is None
 
 def test_model_latency_uses_an_injected_sleeper() -> None:
     sleeps: list[float] = []
