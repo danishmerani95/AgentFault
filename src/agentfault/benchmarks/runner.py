@@ -1,15 +1,14 @@
-from agentfault.testing import ScenarioRunner
-
 from agentfault.benchmarks.models import (
     AgentFactory,
     BenchmarkCaseResult,
     BenchmarkResult,
     BenchmarkSuite,
 )
+from agentfault.testing import ScenarioRunner
 
 
 class BenchmarkRunner:
-    """Run a versioned benchmark suite against a framework-adapted agent."""
+    """Run a versioned benchmark suite against an AgentFault-compatible agent."""
 
     def __init__(self, max_steps: int = 100) -> None:
         if max_steps < 1:
@@ -20,7 +19,17 @@ class BenchmarkRunner:
         self,
         suite: BenchmarkSuite,
         agent_factory: AgentFactory,
+        *,
+        agent_name: str = "custom-agent",
     ) -> BenchmarkResult:
+        """Run all cases with fresh agent/environment instances.
+
+        The factory receives the case task and the exact tools for its isolated
+        environment. It must return a new Agent-compatible instance each time.
+        """
+        if not agent_name.strip():
+            raise ValueError("agent_name must not be empty.")
+
         results: list[BenchmarkCaseResult] = []
 
         for case in suite.cases:
@@ -68,5 +77,6 @@ class BenchmarkRunner:
             suite_id=suite.id,
             suite_version=suite.version,
             category=suite.category,
+            agent_name=agent_name,
             cases=tuple(results),
         )
