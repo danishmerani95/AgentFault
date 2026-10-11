@@ -2,12 +2,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agentfault.testing.assertion import Assertion
-from agentfault.testing.faults import ToolFault
+from agentfault.testing.faults import ModelCallSchedule, ToolFault
 from agentfault.testing.perturbations import Perturbation
-from agentfault.testing.triggers import Trigger
+from agentfault.testing.triggers import ModelCallTrigger, Trigger
 
 PerturbationSchedule = tuple[Trigger, Perturbation]
 FaultSchedule = tuple[Trigger, ToolFault]
+ModelFaultSchedule = tuple[ModelCallTrigger, ModelCallSchedule[1]]
 
 
 @dataclass
@@ -20,3 +21,4 @@ class Scenario:
     perturbations: list[PerturbationSchedule] = field(default_factory=list)
     assertions: list[Assertion] = field(default_factory=list)
     faults: list[FaultSchedule] = field(default_factory=list)
+    model_faults: list[ModelFaultSchedule] = field(default_factory=list)
