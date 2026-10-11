@@ -75,7 +75,9 @@ def _case(
 ) -> tuple[Scenario, ToolRegistry]:
     world = ResearchWorld(source_fresh=source_fresh, sources_agree=sources_agree)
     tools = _tools(world)
-    assertions = [CollectionLengthAssertion("publications", 1 if publish_expected else 0)]
+    assertions: list[Assertion] = [
+        CollectionLengthAssertion("publications", 1 if publish_expected else 0)
+    ]
     if publish_expected:
         assertions.append(_EvidenceAssertion())
     else:
