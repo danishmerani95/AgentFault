@@ -46,7 +46,20 @@ A LangChain adapter can translate an `AIMessage` with tool calls into `ToolCall`
 
 ### LangGraph
 
-LangGraph often owns the full state graph and tool execution loop. To preserve mid-run perturbation, the graph needs to pause after a tool-call decision and route execution through AgentFault (or use a custom tool-execution node that delegates to AgentFault’s executor). Wrapping only a completed `graph.invoke(...)` call is insufficient for interventions between tool calls.
+AgentFault provides a `LangGraphToolCallInterceptor` for LangGraph's native `ToolNode(wrap_tool_call=...)` hook, plus a `LangGraphScenarioRunner` that evaluates existing AgentFault assertions against the tool-call trajectory.
+
+Install LangGraph separately (it remains an optional dependency):
+
+```bash
+uv run --with "langgraph>=1.0,<2" python -m examples.langgraph_integration
+uv run --with "langgraph>=1.0,<2" pytest tests/examples/test_langgraph_integration.py
+```
+
+The runnable example uses a deterministic scripted graph node rather than a live LLM, so it does not need an API key. It looks up an account, changes its status to suspended after the lookup, then has the graph re-check the account. The test asserts the refund tool is never called.
+
+For an existing graph, construct the interceptor using the same environment and perturbations as the scenario, pass it to the `ToolNode` that actually executes the tools, compile the graph, and invoke it through `LangGraphScenarioRunner(scenario, interceptor)`. Wrapping only a completed `graph.invoke(...)` call is insufficient because the runner must intercept each tool execution.
+
+The initial integration supports synchronous `invoke` with sequential calls routed through the configured `ToolNode`. Parallel tool-call ordering, async `ainvoke`, and tools executed through other nodes are not yet supported.
 
 ## Important constraints
 
