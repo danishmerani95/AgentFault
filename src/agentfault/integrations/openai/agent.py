@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from agentfault.agent import Agent
+from agentfault.testing.faults import ModelCallExecutor
 from agentfault.tools.tool import ToolCall
 from openai import OpenAI
 from openai.types.chat import (
@@ -28,12 +29,14 @@ class OpenAIAgent(Agent):
         tools: list[ChatCompletionToolParam],
         model: str,
         client: OpenAI | None = None,
+        model_call_executor: ModelCallExecutor | None = None,
     ) -> None:
         self.client = (
             client if client is not None else OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         )
         self.model = model
         self.tools = tools
+        self.model_call_executor = model_call_executor or ModelCallExecutor()
         self.messages: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": system_prompt},
             ChatCompletionUserMessageParam(role="user", content=user_prompt),
@@ -70,10 +73,12 @@ class OpenAIAgent(Agent):
             )
             self._awaiting_tool_result = False
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            tools=self.tools,
+        response = self.model_call_executor.execute(
+            lambda: self.client.chat.completions.create(
+                model=self.model,
+                messages=self.messages,
+                tools=self.tools,
+            )
         )
 
         if not response.choices:
