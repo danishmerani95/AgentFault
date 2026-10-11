@@ -7,7 +7,7 @@ from typing import Any, TypeAlias, TypeVar
 from agentfault.testing.triggers.model import ModelCallTrigger
 
 T = TypeVar("T")
-ModelCallSchedule: TypeAlias = tuple[ModelCallTrigger, ModelCallFault]
+ModelCallSchedule: TypeAlias = tuple[ModelCallTrigger, "ModelCallFault"]
 
 
 class ModelCallFault:
