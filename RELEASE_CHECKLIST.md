@@ -1,11 +1,11 @@
 # First Release Checklist
 
-Use this checklist before publishing the first public AgentFault release. Do not publish automatically from this checklist; repository visibility, package identity, version, and destination are deliberate release decisions.
+Use this checklist before publishing the first public Agent Fault release. Do not publish automatically from this checklist; repository visibility, package identity, version, and destination are deliberate release decisions.
 
 ## Project identity and license
 
 - [ ] Confirm the repository is intended to be public before publishing.
-- [ ] Resolve possible name confusion before release. An initial search found an existing product using the AgentFault name at [agentfault.com](https://agentfault.com/) and multiple public GitHub repositories named `agentfault`, including [vgprakul/agentfault](https://github.com/vgprakul/agentfault) and [GIFTEDLOV/agentfault](https://github.com/GIFTEDLOV/agentfault). Decide whether the name is sufficiently differentiated or should change.
+- [x] Display-name decision: use **Agent Fault**. A separate product named AgentFault exists at [agentfault.com](https://agentfault.com/); the similar name remains a potential source of confusion, so the public description should clearly state that this project is an open-source AI-agent reliability testing library.
 - [ ] Verify the PyPI distribution name `agentfault` directly against PyPI before upload; availability has not yet been conclusively established.
 - [x] License decision confirmed: use the MIT License. Keep the `LICENSE` file and package metadata consistent with MIT.
 - [ ] Review ownership and copyright information in `LICENSE`.
@@ -13,8 +13,8 @@ Use this checklist before publishing the first public AgentFault release. Do not
 
 ## Package readiness
 
-- [ ] Confirm the version in `pyproject.toml` (currently `0.1.0`) is the version intended for release.
-- [ ] Confirm `uv.lock` is in sync with the project configuration.
+- [x] Confirm the version in `pyproject.toml` (`0.1.0`) is the intended first alpha release version.
+- [x] Confirm `uv.lock` is in sync with the project configuration (the current main-branch CI uses `uv sync --locked` successfully).
 - [ ] Run CI on the exact commit intended for release and require all checks to pass.
 - [ ] Build the source distribution and wheel with `uv build`.
 - [ ] Inspect the distributions and metadata before upload; test installing the wheel in a clean environment.
