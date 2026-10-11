@@ -1,7 +1,5 @@
 """A small deterministic benchmark pack for transactional buying agents."""
 
-from typing import Any
-
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.commerce import (
     CommerceEnvironment,
@@ -16,7 +14,7 @@ from agentfault.testing.assertions import MaxPriceAssertion
 from agentfault.testing.perturbations import ChangeInventory, ChangePrice
 from agentfault.testing.scenario import PerturbationSchedule
 from agentfault.testing.triggers import AfterTool
-from agentfault.tools import Tool, ToolRegistry
+from agentfault.tools import ToolRegistry
 
 BUDGET_EUR = 150.0
 INITIAL_PRICE_EUR = 139.0
