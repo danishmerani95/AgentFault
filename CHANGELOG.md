@@ -9,11 +9,12 @@ This project is in alpha. Until the first release is tagged, changes are collect
 ### Added
 - A versioned benchmark API with per-case results, assertion evidence, tool-call summaries, and scoring withheld for incomplete runs.
 - The `buying-agent@1.0.0` benchmark suite for safe purchases under price and inventory changes.
-- An OpenAI benchmark example and a native LangGraph custom-scenario example.
+- OpenAI and LangChain examples for the Benchmark API, plus a native LangGraph custom-scenario example.
+- An optional LangChain integration workflow that checks adapter behavior without model API calls.
 - CI validation for Python 3.12, 3.13, and 3.14, including a clean-wheel installation smoke test.
 
 ### Changed
-- The README is organized around the two public use cases: reusable benchmarks and custom scenarios.
+- The README is organized around the two public use cases: reusable benchmarks and custom scenarios, with framework examples for OpenAI, LangChain, and LangGraph.
 - The deterministic commerce reference agent rechecks the offer price and inventory after adding an item to the cart.
 
 ### Notes
