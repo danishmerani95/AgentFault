@@ -8,7 +8,7 @@ import json
 import os
 
 from agentfault.agent import Agent
-from agentfault.benchmarks import AgentFactory, BenchmarkRunner
+from agentfault.benchmarks import BenchmarkRunner
 from agentfault.benchmarks.packs import buying_agent_v1
 from agentfault.integrations.openai import OpenAIAgent, to_openai_tools
 from agentfault.tools import Tool
