@@ -2,27 +2,40 @@
 
 **Break the world around your agent. Verify its behavior.**
 
-Agent Fault tests tool-using AI agents against changing conditions: a price rises, inventory disappears, an account is suspended, or a tool fails while the agent is working.
+Agent Fault is an open-source testing toolkit for tool-using AI agents. It lets you change the environment during a run—raise a price, remove inventory, suspend an account, or fail a tool—and assert that the agent still behaves safely.
 
-It offers two APIs over the same stateful testing engine.
+It is designed for developers who need to test **their own agent with scenarios that matter to their application**, rather than rely only on a general capability score.
 
-## 1. Benchmark API
+## Get started
 
-**Use it to compare an agent against a reusable, versioned test suite.**
+Agent Fault requires **Python 3.12 or newer**. The package on PyPI is named `agentfault`.
 
-The built-in `buying-agent@1.0.0` benchmark contains five deterministic scenarios covering:
+```bash
+python -m pip install agentfault
+```
 
-- Buying an eligible offer within budget.
-- Price increases before validation.
-- Inventory disappearing before cart creation.
-- Price increases after an item enters the cart.
-- Inventory disappearing after an item enters the cart.
+Start with the [Getting Started guide](docs/getting-started.md). It walks through a complete, deterministic custom scenario that runs without a model API key. Then read [Core Concepts](docs/concepts.md) to understand the agent, tools, environment, perturbations, assertions, and results.
 
-A benchmark returns a pass percentage, per-case results, failed assertions, and observed tool calls. If any case has an execution error, the headline score is withheld rather than treating an invalid run as a pass or failure.
+## What you can test
 
-The API accepts an agent factory that implements AgentFault's `Agent` contract. OpenAI has a built-in adapter; other frameworks can provide an adapter for their tool-call loop.
+- **Changing state:** a price or inventory count changes after a tool call.
+- **Tool failures:** a dependency fails and the agent must recover or stop safely.
+- **Prohibited actions:** a refund, purchase, or other consequential tool must not be called in a risky state.
+- **Application-specific rules:** define custom assertions over the recorded trajectory and test environment.
 
-Run the OpenAI example (requires an OpenAI API key; all tools still use a synthetic test environment):
+Agent Fault has two complementary APIs:
+
+### Custom scenarios
+
+Build focused tests around your own failure modes. A scenario combines an agent, an isolated environment, a tool registry, optional perturbations and triggers, and assertions.
+
+Start here if you are integrating your own agent: [Getting Started](docs/getting-started.md) → [Custom Scenarios](docs/custom-scenarios.md) → [Integrations](docs/integrations.md).
+
+### Versioned benchmarks
+
+Use a reusable suite to compare agent behavior across a fixed set of cases. The first built-in suite, `buying-agent@1.0.0`, contains five deterministic tests for budget and inventory constraints under mid-run changes.
+
+The benchmark API accepts an agent factory implementing Agent Fault's `Agent` contract. OpenAI and LangChain chat-model examples are available in the repository and require an API key:
 
 ```bash
 uv sync --extra dev
@@ -30,71 +43,31 @@ export OPENAI_API_KEY=...
 uv run python -m examples.openai_benchmark
 ```
 
-The example is in [`examples/openai_benchmark.py`](examples/openai_benchmark.py). It prints a JSON report and can be adapted to use your own prompts, model, and agent.
+See [Benchmarks](docs/benchmarks.md) for score semantics and the full list of cases. Repository examples are not included in the installed PyPI wheel; clone the repository before running commands under `examples/`.
 
-The [LangChain benchmark example](examples/langchain_benchmark.py) uses LangChain's `ChatOpenAI` and `bind_tools` APIs with the same versioned buying benchmark. AgentFault deliberately executes one tool call at a time, so the model's next decision sees the result and any state change introduced by the scenario. It requires an OpenAI API key and keeps all tool execution in the synthetic test world:
+## Framework integrations
 
-```bash
-export OPENAI_API_KEY=...
-uv run --with "langchain-openai>=0.3,<2" python -m examples.langchain_benchmark
-```
+Agent Fault needs control over tool execution to record what happened and apply perturbations between decisions. The integration path depends on who owns the tool loop:
 
-This is a LangChain chat-model adapter, not a wrapper around an arbitrary LangChain `AgentExecutor`; the AgentFault runner owns the tool loop to make stateful interventions deterministic.
+- **Your own agent / custom loop:** implement `Agent.next_action(observation)`; Agent Fault executes registered tools and returns their results.
+- **LangChain chat models:** the example adapts a model's single tool-call decision to the Agent contract. It is not a transparent wrapper for every `AgentExecutor` workflow.
+- **LangGraph:** use the native `LangGraphScenarioRunner` and `LangGraphToolCallInterceptor` when the graph owns execution.
 
-## 2. Custom Scenario API
+See [Integrations](docs/integrations.md) for runnable examples, boundaries, and current limitations.
 
-**Use it to test a failure mode specific to your application.**
+## Safety and project status
 
-A scenario defines your agent, isolated environment and tools, an optional perturbation, and assertions about acceptable behavior. Use it for buying, support, research, operations, or any workflow where an agent's actions depend on tool results or changing state.
+Use fake services, test fixtures, or an isolated sandbox—not live payment, purchase, refund, or customer systems. Agent Fault can only record and perturb tool calls that pass through its configured executor or integration hook. Read [Safety](docs/safety.md) before connecting an application.
 
-For an agent that implements `Agent`, compose a `Scenario` and run it with `ScenarioRunner`:
+**Project status: alpha.** APIs may change. Contributions and issue reports are welcome.
 
-```python
-from agentfault.testing import Scenario, ScenarioRunner
-from agentfault.testing.assertions import MaxPriceAssertion
-from agentfault.testing.perturbations import ChangePrice
-from agentfault.testing.triggers import AfterTool
-from agentfault.tools import ToolRegistry
+## Documentation
 
-# Supply these from your application or a test fixture:
-# agent_under_test, test_environment, and the Tool objects.
-tool_registry = ToolRegistry(test_tools)
-
-scenario = Scenario(
-    name="price changes during checkout",
-    agent=agent_under_test,
-    environment=test_environment,
-    perturbations=[
-        (AfterTool("get_offers_for_product"),
-         ChangePrice("offer_sony_1", new_price=179.0)),
-    ],
-    assertions=[MaxPriceAssertion(max_price=150.0)],
-)
-result = ScenarioRunner(tool_registry).run(scenario)
-assert result.passed, [item.message for item in result.assertions if not item.passed]
-```
-
-For a graph that owns its own decision loop, use its integration runner instead of wrapping the entire graph as a generic `Agent`.
-
-Run the LangGraph example (requires LangGraph; no model API key is needed):
-
-```bash
-uv run --with "langgraph>=1.0,<2" python -m examples.langgraph_integration
-```
-
-The [LangGraph example](examples/langgraph_integration.py) uses a real `StateGraph` and `ToolNode`, a scripted decision node, and a fake account/refund world. It shows a custom scenario that suspends an account after lookup and checks that no refund tool is called. The current LangGraph integration supports synchronous `invoke`, sequential calls routed through the configured `ToolNode`; async execution, parallel calls, and other tool paths are not yet supported.
-
-## Use cases
-
-- **Buying agents:** stop unsafe purchases when prices or inventory change.
-- **Support agents:** verify permissions and account state before refunds or account changes.
-- **Search and research agents:** test stale, missing, or contradictory information.
-- **Operations and workflow agents:** inject tool failures and check recovery or safe stopping.
-
-The built-in benchmark currently covers buying. Other roles can be tested today with custom scenarios; additional benchmark packs can use the same versioned suite API.
-
-## Safety and scope
-
-Use fixtures, fake services, or an isolated sandbox. AgentFault does not make production tools safe automatically. Only actions routed through the configured executor/interceptor are recorded and can be perturbed.
-
-Project status: **alpha**. APIs may change. See [custom adapter notes](docs/custom-adapters.md), [contributing](CONTRIBUTING.md), and the [changelog](CHANGELOG.md).
+- [Getting Started](docs/getting-started.md) — first runnable custom scenario
+- [Core Concepts](docs/concepts.md) — the mental model and execution lifecycle
+- [Custom Scenarios](docs/custom-scenarios.md) — perturbations, failures, assertions, and recipes
+- [Integrations](docs/integrations.md) — generic agents, OpenAI, LangChain, and LangGraph
+- [Benchmarks](docs/benchmarks.md) — built-in suite, factories, and scoring
+- [Results and Troubleshooting](docs/results-and-troubleshooting.md) — trajectories, errors, and debugging
+- [Safety](docs/safety.md) — isolated test environments and execution boundaries
+- [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
