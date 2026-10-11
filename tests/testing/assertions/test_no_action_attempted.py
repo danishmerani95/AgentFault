@@ -1,5 +1,3 @@
-from typing import Any
-
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.assertion import EvaluationContext
 from agentfault.tools import ToolCall
