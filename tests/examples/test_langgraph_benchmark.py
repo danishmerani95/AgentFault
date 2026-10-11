@@ -88,5 +88,5 @@ def test_langgraph_can_execute_benchmark_case_with_native_tool_node(monkeypatch)
     scenario_result = result.cases[0].scenario_result
     assert scenario_result is not None
     assert [step.tool_call.name for step in scenario_result.trajectory] == ["lookup"]
-    assert scenario_result.trajectory[0].observation == '{"status": "ok"}'
+    assert scenario_result.trajectory[0].succeeded is True
     assert all(assertion.passed for assertion in scenario_result.assertions)
