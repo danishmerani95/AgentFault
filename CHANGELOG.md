@@ -2,13 +2,13 @@
 
 Notable changes to AgentFault are documented here.
 
-This project is in alpha. Until the first release is tagged, changes are collected under \`Unreleased\`.
+This project is in alpha. Until the first release is tagged, changes are collected under `Unreleased`.
 
 ## [Unreleased]
 
 ### Added
 - A versioned benchmark API with per-case results, assertion evidence, tool-call summaries, and scoring withheld for incomplete runs.
-- The \`buying-agent@1.0.0\` benchmark suite for safe purchases under price and inventory changes.
+- The `buying-agent@1.0.0` benchmark suite for safe purchases under price and inventory changes.
 - An OpenAI benchmark example and a native LangGraph custom-scenario example.
 - CI validation for Python 3.12, 3.13, and 3.14, including a clean-wheel installation smoke test.
 
