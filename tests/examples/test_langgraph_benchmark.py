@@ -6,7 +6,6 @@ pytest.importorskip("langgraph")
 pytest.importorskip("langchain_core")
 
 
-from agentfault.agent import Agent
 from agentfault.benchmarks import BenchmarkCase, BenchmarkRunner, BenchmarkSuite
 from agentfault.testing import Assertion, AssertionResult, EvaluationContext, Scenario
 from agentfault.tools import Tool, ToolRegistry
