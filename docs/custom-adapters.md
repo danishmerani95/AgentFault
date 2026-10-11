@@ -11,13 +11,19 @@ Implement `agentfault.agent.Agent`:
 - Return `None` when the agent is done.
 - Do not execute the proposed tool inside the adapter. Register its implementation in the scenario's `ToolRegistry`; AgentFault invokes it and returns the observation on the next decision.
 
-The benchmark API accepts a factory for this contract. AgentFault includes a generic OpenAI tool-calling adapter; see [the benchmark example](../examples/openai_benchmark.py).
+The Benchmark API accepts a factory for this contract. AgentFault includes a generic OpenAI adapter; see [the OpenAI benchmark example](../examples/openai_benchmark.py).
+
+## LangChain
+
+See the [LangChain benchmark example](../examples/langchain_benchmark.py). It uses LangChain's `ChatOpenAI` and `bind_tools` to select a tool call but adapts that decision into AgentFault's `Agent` contract. AgentFault—not LangChain—executes each tool, records the result, applies scheduled perturbations, and then asks for the next model decision. This keeps the benchmark's interventions between sequential decisions.
+
+This example is specifically a LangChain chat-model adapter, not a transparent adapter for arbitrary LangChain `AgentExecutor` workflows. If another framework component owns the tool execution loop, its actual tool execution path must be instrumented for AgentFault to record and perturb it.
 
 ## LangGraph
 
-LangGraph owns its own graph execution loop, so use the native integration: wrap the relevant `ToolNode` with `LangGraphToolCallInterceptor` and invoke the compiled graph with `LangGraphScenarioRunner`. See [the runnable custom-scenario example](../examples/langgraph_integration.py).
+LangGraph owns its own graph execution loop, so use the native integration: wrap the relevant `ToolNode` with `LangGraphToolCallInterceptor` and invoke the compiled graph with `LangGraphScenarioRunner`. See the [runnable custom-scenario example](../examples/langgraph_integration.py).
 
-Current limitations: synchronous `invoke`, sequential calls through the configured `ToolNode`; async execution, parallel ordering, and tools executed by other nodes are not supported yet. The native LangGraph runner is for custom scenarios; the first BenchmarkRunner release accepts agents through the generic `Agent` contract.
+Current limitations: synchronous `invoke`, sequential calls through the configured `ToolNode`; async execution, parallel ordering, and tools executed by other nodes are not supported yet. The native LangGraph runner is for custom scenarios; the first `BenchmarkRunner` release accepts agents through the generic `Agent` contract.
 
 ## Safety
 
