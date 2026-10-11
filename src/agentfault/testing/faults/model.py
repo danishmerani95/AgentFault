@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import time
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 from agentfault.testing.triggers.model import ModelCallTrigger
 
 T = TypeVar("T")
-ModelCallSchedule = tuple[ModelCallTrigger, "ModelCallFault"]
+ModelCallSchedule: TypeAlias = tuple[ModelCallTrigger, ModelCallFault]
 
 
 class ModelCallFault:
