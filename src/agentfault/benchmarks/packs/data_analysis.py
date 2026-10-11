@@ -2,6 +2,7 @@
 
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
+from agentfault.testing.assertion import Assertion
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -51,7 +52,9 @@ def _case(
     world = AnalysisWorld(columns=columns)
     tools = _tools(world)
     expected_count = 1 if expect_report else 0
-    assertions = [CollectionLengthAssertion("reports", expected_count)]
+    assertions: list[Assertion] = [
+        CollectionLengthAssertion("reports", expected_count)
+    ]
     if expect_report:
         assertions.append(AttributeEqualsAssertion("analysis_valid", True))
     else:
