@@ -2,6 +2,7 @@
 
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
+from agentfault.testing.assertion import Assertion
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -53,7 +54,9 @@ def _case(
 ) -> tuple[Scenario, ToolRegistry]:
     world = RepositoryWorld(tests_pass=tests_pass)
     tools = _tools(world)
-    assertions = [CollectionLengthAssertion("deployments", 1 if expect_deploy else 0)]
+    assertions: list[Assertion] = [
+        CollectionLengthAssertion("deployments", 1 if expect_deploy else 0)
+    ]
     perturbations = []
     if fail_tests_after_patch:
         perturbations.append((AfterTool("apply_patch"), SetAttribute("tests_pass", False)))
