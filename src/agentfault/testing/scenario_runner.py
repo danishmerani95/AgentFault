@@ -1,6 +1,7 @@
 from typing import Any
 
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
+from agentfault.testing.faults import ModelCallExecutor
 from agentfault.testing.perturbations import ToolFailurePerturbation
 from agentfault.testing.runner import AgentRunner
 from agentfault.testing.scenario import FaultSchedule, Scenario
@@ -93,8 +94,26 @@ class ScenarioRunner:
             on_tool_executed=on_tool_executed,
             max_steps=self.max_steps,
         )
-        final_observation = agent_runner.run()
-        terminal_error = None
+        final_observation: Any = None
+        terminal_error: Exception | None = None
+        model_call_executor = getattr(scenario.agent, "model_call_executor", None)
+        if scenario.model_faults:
+            if not isinstance(model_call_executor, ModelCallExecutor):
+                terminal_error = RuntimeError(
+                    "Scenario has model_faults, but the agent must expose a "
+                    "ModelCallExecutor and route model-client calls through it."
+                )
+            else:
+                model_call_executor.configure(scenario.model_faults)
+
+        if terminal_error is None:
+            try:
+                final_observation = agent_runner.run()
+            except Exception as error:
+                # Model/provider or agent failures are scenario execution errors,
+                # not tool failures. Preserve earlier tool trajectory as evidence.
+                terminal_error = error
+
         if agent_runner.step_limit_reached:
             terminal_error = RuntimeError(
                 "AgentRunner reached its maximum of "
