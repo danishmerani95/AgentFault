@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, TypeAlias
+from typing import Callable, Literal, TypeAlias
 
 from agentfault.agent import Agent
 from agentfault.testing import Scenario, ScenarioResult
@@ -7,7 +7,7 @@ from agentfault.tools import Tool, ToolRegistry
 
 AgentFactory: TypeAlias = Callable[[str, list[Tool]], Agent]
 CaseFactory: TypeAlias = Callable[[AgentFactory], tuple[Scenario, ToolRegistry]]
-CaseStatus: TypeAlias = str
+CaseStatus: TypeAlias = Literal["passed", "failed", "error"]
 
 
 @dataclass(frozen=True)
@@ -17,6 +17,12 @@ class BenchmarkCase:
     id: str
     title: str
     build: CaseFactory
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValueError("Benchmark case id must not be empty.")
+        if not self.title.strip():
+            raise ValueError("Benchmark case title must not be empty.")
 
 
 @dataclass(frozen=True)
@@ -30,12 +36,9 @@ class BenchmarkSuite:
     cases: tuple[BenchmarkCase, ...]
 
     def __post_init__(self) -> None:
-        if not self.id.strip():
-            raise ValueError("Benchmark suite id must not be empty.")
-        if not self.version.strip():
-            raise ValueError("Benchmark suite version must not be empty.")
-        if not self.category.strip():
-            raise ValueError("Benchmark suite category must not be empty.")
+        for name in ("id", "version", "category", "description"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"Benchmark suite {name} must not be empty.")
         if not self.cases:
             raise ValueError("Benchmark suite must contain at least one case.")
         case_ids = [case.id for case in self.cases]
@@ -65,6 +68,7 @@ class BenchmarkResult:
     suite_id: str
     suite_version: str
     category: str
+    agent_name: str
     cases: tuple[BenchmarkCaseResult, ...]
 
     @property
@@ -76,7 +80,7 @@ class BenchmarkResult:
         """Return percentage passed, or None when any case was invalid."""
         if not self.complete or not self.cases:
             return None
-        return 100.0 * sum(case.passed for case in self.cases) / len(self.cases)
+        return round(100.0 * self.passed_count / len(self.cases), 2)
 
     @property
     def passed_count(self) -> int:
@@ -96,6 +100,7 @@ class BenchmarkResult:
             "suite_id": self.suite_id,
             "suite_version": self.suite_version,
             "category": self.category,
+            "agent_name": self.agent_name,
             "complete": self.complete,
             "score": self.score,
             "passed": self.passed_count,
