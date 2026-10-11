@@ -35,7 +35,7 @@ def build_scenario(
     fault: Any,
     trigger: Trigger,
     calls: int = 1,
-) -> tuple[Scenario, dict[str, int]]:
+) -> tuple[Scenario, dict[str, int], ToolRegistry]:
     executions = {"count": 0}
 
     def fetch() -> Any:
