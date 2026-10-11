@@ -3,7 +3,7 @@ from typing import Any
 from agentfault.agent import Agent
 from agentfault.benchmarks import BenchmarkCase, BenchmarkRunner, BenchmarkSuite
 from agentfault.testing import Scenario, ScenarioRunner
-from agentfault.tools import Tool, ToolCall, ToolRegistry
+from agentfault.tools import ToolCall, ToolRegistry
 
 
 class NoOpAgent(Agent):
