@@ -6,6 +6,10 @@ from agentfault.benchmarks.models import (
     BenchmarkSuite,
 )
 from agentfault.benchmarks.runner import BenchmarkRunner
+from agentfault.benchmarks.repeated import (
+    RepeatedBenchmarkResult,
+    RepeatedBenchmarkRunner,
+)
 
 __all__ = [
     "AgentFactory",
@@ -14,4 +18,6 @@ __all__ = [
     "BenchmarkResult",
     "BenchmarkRunner",
     "BenchmarkSuite",
+    "RepeatedBenchmarkResult",
+    "RepeatedBenchmarkRunner",
 ]
