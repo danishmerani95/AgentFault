@@ -1,6 +1,7 @@
 from agentfault.benchmarks.models import (
     AgentFactory,
     BenchmarkCaseResult,
+    CaseStatus,
     BenchmarkResult,
     BenchmarkSuite,
 )
@@ -51,7 +52,7 @@ class BenchmarkRunner:
                 continue
 
             if scenario_result.error is not None:
-                status = "error"
+                status: CaseStatus = "error"
                 error_message = (
                     f"{type(scenario_result.error).__name__}: "
                     f"{scenario_result.error}"
