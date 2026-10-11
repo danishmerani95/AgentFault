@@ -3,6 +3,7 @@
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
 from agentfault.testing.assertion import Assertion
+from agentfault.testing.scenario import PerturbationSchedule
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -59,7 +60,7 @@ def _case(
         assertions.append(AttributeEqualsAssertion("analysis_valid", True))
     else:
         assertions.append(NoActionAttemptedAssertion("publish_report"))
-    perturbations = (
+    perturbations: list[PerturbationSchedule] = (
         [(AfterTool("inspect_schema"), SetAttribute("columns", ["date"]))]
         if remove_revenue_after_inspection
         else []
