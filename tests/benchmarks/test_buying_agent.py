@@ -1,13 +1,14 @@
 from agentfault.agent import DeterministicCommerceAgent, NaiveCommerceAgent
 from agentfault.benchmarks import BenchmarkRunner
 from agentfault.benchmarks.packs import buying_agent_v1
+from agentfault.tools import Tool
 
 
-def robust_agent(task: str, tools: list[object]) -> DeterministicCommerceAgent:
+def robust_agent(task: str, tools: list[Tool]) -> DeterministicCommerceAgent:
     return DeterministicCommerceAgent(query="headphones", max_price=150.0)
 
 
-def naive_agent(task: str, tools: list[object]) -> NaiveCommerceAgent:
+def naive_agent(task: str, tools: list[Tool]) -> NaiveCommerceAgent:
     return NaiveCommerceAgent(query="headphones")
 
 
@@ -36,8 +37,11 @@ def test_buying_result_contains_scenario_evidence() -> None:
     assert payload["suite_id"] == "buying-agent"
     assert payload["suite_version"] == "1.0.0"
     assert payload["score"] == 100.0
-    assert len(payload["cases"]) == 5  # type: ignore[arg-type]
-    first_case = payload["cases"][0]  # type: ignore[index]
-    assert first_case["status"] == "passed"  # type: ignore[index]
-    assert first_case["assertions"]  # type: ignore[index]
-    assert first_case["tool_calls"]  # type: ignore[index]
+    cases = payload["cases"]
+    assert isinstance(cases, list)
+    assert len(cases) == 5
+    first_case = cases[0]
+    assert isinstance(first_case, dict)
+    assert first_case["status"] == "passed"
+    assert first_case["assertions"]
+    assert first_case["tool_calls"]
