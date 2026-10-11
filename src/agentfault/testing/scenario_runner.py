@@ -1,7 +1,6 @@
 from typing import Any
 
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
-from agentfault.testing.faults import ToolFault
 from agentfault.testing.perturbations import ToolFailurePerturbation
 from agentfault.testing.runner import AgentRunner
 from agentfault.testing.scenario import FaultSchedule, Scenario
