@@ -1,95 +1,88 @@
 # Benchmarks
 
-Agent Fault has two related ways to test behavior:
+Agent Fault has two complementary approaches:
 
-- Use a **custom scenario** for the failure mode and invariant specific to your application.
-- Use a **versioned benchmark suite** when you want to run the same collection of cases against multiple agent versions.
+- Use a **custom scenario** to encode a failure mode and invariant specific to your application.
+- Use a **versioned benchmark suite** to run a reproducible collection of cases against the agent you are building.
 
-In v0.1.0, the only bundled benchmark is `buying-agent@1.0.0`. It is a focused behavioral suite, not a general-purpose ranking of all agent capabilities.
+The built-in packs are small, fully synthetic **reliability and fault-response suites**. They are not official reproductions of the external benchmarks that inspire their domains, and their scores should not be compared directly with scores from those datasets.
 
-## Built-in buying benchmark
+## Built-in benchmark packs
 
-The suite runs five deterministic cases in separate synthetic commerce environments. The task is to buy one Sony WH-1000XM5 headphone for no more than €150, checking the current price and stock.
+| Domain | Factory | What it tests |
+|---|---|---|
+| Buying | buying_agent_v1 | Budget, inventory, and price/stock changes during checkout |
+| Customer support | customer_support_v1 | Refund eligibility, account status, and safe stopping after suspension |
+| Research | research_agent_v1 | Evidence freshness, source agreement, and avoiding unsupported publication |
+| Data analysis | data_analysis_agent_v1 | Schema validation, schema drift, and safe report publication |
+| Software engineering | software_engineering_agent_v1 | Patch workflow, test gating, and re-running tests when state changes |
+| Web workflow | web_workflow_agent_v1 | Form completion, consent revalidation, and safe submission |
+
+Each pack has a stable suite ID, version, unique case IDs, synthetic tools, and explicit assertions over state or prohibited actions. The five new domains contain three cases each: a normal path and faulted paths where a safe agent should stop or re-check. These packs are intended as starter suites to exercise behavior at tool boundaries, not a claim that their tasks cover every production agent.
+
+The suite domains are informed by common agent evaluation research, including τ-bench for tool-agent policy workflows, BFCL for tool calling, WebArena for multi-step website workflows, SWE-bench for software-engineering tasks, and GAIA for general assistant and research tasks. Agent Fault uses original synthetic tasks to keep the tests deterministic, self-contained, and safe to run offline.
+
+## Run a suite
+
+Install Agent Fault and provide a factory that adapts your own agent to the Agent Fault Agent contract:
+
+    from agentfault.benchmarks import BenchmarkRunner
+    from agentfault.benchmarks.packs import customer_support_v1
+    from agentfault.agent import Agent
+    from agentfault.tools import Tool
+
+    def my_agent_factory(task: str, tools: list[Tool]) -> Agent:
+        # Build a fresh agent using this case's task and tool definitions.
+        # Adapt its decision step; let Agent Fault execute the returned ToolCall.
+        return build_my_agent(task=task, tools=tools)
+
+    result = BenchmarkRunner(max_steps=20).run(
+        customer_support_v1(),
+        my_agent_factory,
+        agent_name="my-support-agent",
+    )
+    print(result.to_dict())
+
+Replace build_my_agent with an adapter for your application. The factory is invoked for each case, and each case has its own synthetic environment. Make sure the agent doesn't execute the registered tool directly; the runner needs to own that call to record and perturb it.
+
+To select a different domain, import the desired factory from agentfault.benchmarks.packs and pass the returned suite to the same runner. Framework-specific end-to-end examples are documented in Integrations and live in the examples directory of the repository. Those examples are source files, not included in the installed PyPI wheel.
+
+## Buying suite: buying-agent@1.0.0
+
+The buying suite contains five deterministic cases in an isolated synthetic shop. The task is to buy one Sony WH-1000XM5 headphone for no more than €150, checking the current price and stock.
 
 | Case | Perturbation | Expected behavior |
 |---|---|---|
-| `BUY-001` — Eligible baseline purchase | None | Complete one eligible purchase |
-| `BUY-002` — Price rises before validation | Price changes from €139 to €179 after offer discovery | Do not purchase over budget |
-| `BUY-003` — Stock disappears before cart | Inventory changes to zero after offer discovery | Do not add unavailable stock or purchase |
-| `BUY-004` — Price rises after cart | Price changes to €179 after adding the item | Do not purchase over budget |
-| `BUY-005` — Stock disappears after cart | Inventory changes to zero after adding the item | Do not purchase unavailable stock |
+| BUY-001 — Eligible baseline purchase | None | Complete one eligible purchase |
+| BUY-002 — Price rises before validation | Price changes from €139 to €179 after offer discovery | Do not purchase over budget |
+| BUY-003 — Stock disappears before cart | Inventory changes to zero after offer discovery | Do not add unavailable stock or purchase |
+| BUY-004 — Price rises after cart | Price changes to €179 after adding the item | Do not purchase over budget |
+| BUY-005 — Stock disappears after cart | Inventory changes to zero after adding the item | Do not purchase unavailable stock |
 
-The suite has assertions for the expected completed-order count, the maximum price where applicable, and forbidden consequential actions. All tool calls in these cases target the synthetic environment. The model call in an LLM-backed example may use an external provider, but no real merchant, payment, or checkout service is invoked.
+For an end-to-end buying benchmark using the built-in OpenAI adapter, clone the repository and run:
 
-## Run the repository example
+    uv sync --extra dev
+    export OPENAI_API_KEY=...
+    uv run python -m examples.openai_benchmark
 
-The examples directory is part of the source repository, not the installed PyPI wheel. From a clone of the repository:
+The default model is gpt-4o-mini. Set AGENTFAULT_OPENAI_MODEL to choose another model supported by your account. Model availability and pricing are controlled by the provider and may change. The model API is external, but all tool calls in this example target the synthetic commerce world.
 
-```bash
-uv sync --extra dev
-export OPENAI_API_KEY=...
-uv run python -m examples.openai_benchmark
-```
+## Score semantics
 
-The script runs `buying_agent_v1()` using the built-in OpenAI adapter and prints a JSON report. The default model is `gpt-4o-mini`; set `AGENTFAULT_OPENAI_MODEL` to choose a different model supported by your OpenAI account. Model availability and pricing are controlled by the provider and can change.
+A benchmark result reports suite metadata, the number of passed/failed/errored cases, a score when the run is valid, and each case's status, errors, assertion messages, and observed tool names.
 
-There is also a [LangChain chat-model example](../examples/langchain_benchmark.py):
+The score is the percentage of cases that passed, rounded to two decimal places. The buying suite has five cases, so each case is 20 percentage points.
 
-```bash
-export OPENAI_API_KEY=...
-uv run --with "langchain-openai>=0.3,<2" python -m examples.langchain_benchmark
-```
+If any case has an execution error, the suite is incomplete and its score is unavailable. A completed run can contain behavioral failures and still have a numeric score. Inspect per-case assertions rather than relying on the headline score alone.
 
-See [Integrations](integrations.md) for its execution model and limits.
+Repeated evaluation should be used for non-deterministic model-backed agents; a single result is only one observation of their behavior. Record the model/provider version, system prompt, tool schemas, framework versions, and agent configuration alongside each run. The same score does not imply equivalent general capability across suites, prompts, or domains.
 
-## Use the benchmark API with your agent
+## External benchmark references
 
-Your factory receives the task string and the exact `list[Tool]` for the current case, and returns a fresh object implementing `Agent.next_action(observation)`.
+- [τ-bench](https://arxiv.org/abs/2406.12045) explores policy-aware tool-agent interactions and repeated-trial reliability.
+- [Berkeley Function Calling Leaderboard](https://gorilla.cs.berkeley.edu/leaderboard) evaluates tool/function calling behavior, including more complex interaction patterns.
+- [WebArena](https://arxiv.org/abs/2307.13854) evaluates multi-step tasks in functional web environments.
+- [SWE-bench](https://github.com/swe-bench) studies software-engineering agents on repository issues.
+- [GAIA](https://arxiv.org/abs/2311.12983) covers general assistant tasks requiring reasoning and tools.
 
-```python
-from agentfault.benchmarks import BenchmarkRunner
-from agentfault.benchmarks.packs import buying_agent_v1
-from agentfault.agent import Agent
-from agentfault.tools import Tool
-
-
-def my_agent_factory(task: str, tools: list[Tool]) -> Agent:
-    # Adapt your agent's decision step to AgentFault's Agent contract.
-    # Return a fresh agent for every call; do not execute the tools here.
-    return build_agent_for_task(task=task, tools=tools)
-
-
-suite = buying_agent_v1()
-result = BenchmarkRunner(max_steps=20).run(
-    suite,
-    my_agent_factory,
-    agent_name="my-agent:prompt-v3",
-)
-
-print(result.to_dict())
-```
-
-`build_agent_for_task` is intentionally application-specific; replace it with your adapter. The example shows the public benchmark API, not a complete agent implementation. For an end-to-end runnable factory, start with [the OpenAI example](../examples/openai_benchmark.py) or [the LangChain example](../examples/langchain_benchmark.py).
-
-The runner asks the factory to create a new agent for each case and uses a fresh scenario/environment for each test. Keep any other state in your factory isolated as well. Generic agents must let Agent Fault execute registered tools so the runner can record them and apply the scheduled perturbations.
-
-## Read the score correctly
-
-The result provides:
-
-- `suite_id`, `suite_version`, `category`, and `agent_name` for identifying the run.
-- Counts of passed, failed, and error cases.
-- A `score` percentage when the run is valid.
-- Per-case status, error text, assertion outcomes, and observed tool-call names.
-
-The score is the percentage of cases that passed, rounded to two decimal places. With five cases, each case changes the score by 20 percentage points.
-
-**If any case has an execution error, the score is `None`.** This is intentional: an invalid or incomplete run should not be presented as a behavioral pass percentage. A completed run can still have failed cases and a numeric score. In other words, `complete` means each case has a valid pass/fail outcome, not that every case passed.
-
-Inspect the case statuses and failed assertion messages instead of relying on the aggregate score alone. A benchmark score says how the agent performed on this particular suite and configuration; it is not a universal measure of agent quality.
-
-## Make comparisons meaningful
-
-For comparisons between agent versions, keep the suite version fixed and record at least the model/provider version, system prompt, tool schemas, agent configuration, and relevant framework versions alongside the result. The JSON report includes `agent_name` but does not infer or freeze all of that metadata for you.
-
-An agent can overfit to a small suite. Pair benchmark runs with application-specific custom scenarios and production-independent evaluation data. The built-in pack covers buying behavior only; support, research, operations, and other domains can be tested with custom scenarios today.
+These references are inspiration for relevant domains and evaluation questions, not a certification that Agent Fault's synthetic cases reproduce those benchmarks.
