@@ -2,19 +2,21 @@
 
 Notable changes to AgentFault are documented here.
 
-This project is in alpha. Until the first release is tagged, changes are collected under `Unreleased`.
+This project is in alpha. Until the first release is tagged, changes are collected under \`Unreleased\`.
 
 ## [Unreleased]
 
 ### Added
-- Stateful scenarios with perturbations that change environment state before or after tool calls.
-- Controlled tool-failure injection with structured error feedback and trajectory evidence.
-- Assertions for budget limits and prohibited consequential actions.
-- A CLI for running scenario factories and a pytest plugin using the same scenario runner.
-- A generic OpenAI tool-calling adapter alongside the commerce example integration.
-- Example scenarios for state changes, transient tool recovery, and unsafe purchases.
+- A versioned benchmark API with per-case results, assertion evidence, tool-call summaries, and scoring withheld for incomplete runs.
+- The \`buying-agent@1.0.0\` benchmark suite for safe purchases under price and inventory changes.
+- An OpenAI benchmark example and a native LangGraph custom-scenario example.
 - CI validation for Python 3.12, 3.13, and 3.14, including a clean-wheel installation smoke test.
 
+### Changed
+- The README is organized around the two public use cases: reusable benchmarks and custom scenarios.
+- The deterministic commerce reference agent rechecks the offer price and inventory after adding an item to the cart.
+
 ### Notes
-- The API is in alpha and may change before the first stable release.
+- APIs are in alpha and may change before the first stable release.
+- The built-in benchmark currently covers buying agents; other categories can use custom scenarios or add versioned suites.
 - The first release version and date will be recorded when a release is actually published.
