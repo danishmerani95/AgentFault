@@ -7,6 +7,8 @@ world; this example never calls a real merchant or payment service.
 import json
 import os
 
+from dotenv import load_dotenv
+
 from agentfault.agent import Agent
 from agentfault.benchmarks import BenchmarkRunner
 from agentfault.benchmarks.packs import buying_agent_v1
@@ -35,6 +37,8 @@ def openai_agent_factory(task: str, tools: list[Tool]) -> Agent:
 
 
 def main() -> int:
+    load_dotenv()
+
     if not os.getenv("OPENAI_API_KEY"):
         raise SystemExit(
             "Set OPENAI_API_KEY to run this example. "
