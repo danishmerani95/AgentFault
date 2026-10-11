@@ -10,7 +10,6 @@ from agentfault.testing import (
     Scenario,
     ScenarioRunner,
 )
-from agentfault.testing.triggers import AfterModelCall, BeforeModelCall
 from agentfault.tools import ToolRegistry
 
 
