@@ -5,101 +5,76 @@ from agentfault.tools.tool import ToolCall
 
 
 class DeterministicCommerceAgent(Agent):
-    def __init__(
-        self,
-        query: str,
-        max_price: float,
-    ) -> None:
+    """Reference buyer that rechecks offer price and stock before purchase."""
+
+    def __init__(self, query: str, max_price: float) -> None:
         self.query = query
         self.max_price = max_price
-
         self.step = 0
         self.offer_id: str | None = None
         self.cart_id: str | None = None
 
     def next_action(self, observation: Any) -> ToolCall | None:
         if self.step == 0:
-            self.step += 1
-
-            return ToolCall(
-                name="search_products",
-                arguments={"query": self.query},
-            )
+            self.step = 1
+            return ToolCall("search_products", {"query": self.query})
 
         if self.step == 1:
-            products = observation
-
-            if not products:
+            self.step = 2
+            if not observation:
                 return None
-
-            self.step += 1
-
             return ToolCall(
-                name="get_offers_for_product",
-                arguments={"product_id": products[0].id},
+                "get_offers_for_product",
+                {"product_id": observation[0].id},
             )
 
         if self.step == 2:
-            products = observation
-
-            if not products:
+            self.step = 3
+            if not observation:
                 return None
-
-            self.step += 1
-
-            return ToolCall(
-                name="get_offer",
-                arguments={"offer_id": "offer_sony_1"},
-            )
+            self.offer_id = observation[0].id
+            return ToolCall("get_offer", {"offer_id": self.offer_id})
 
         if self.step == 3:
-            offer = observation
-            self.offer_id = offer.id
-
-            if offer.price > self.max_price:
+            self.step = 4
+            if observation.price > self.max_price:
                 return None
-
-            self.step += 1
-
-            return ToolCall(
-                name="check_inventory",
-                arguments={"offer_id": self.offer_id},
-            )
+            return ToolCall("check_inventory", {"offer_id": self.offer_id})
 
         if self.step == 4:
-            inventory = observation
-
-            if inventory.quantity < 1:
+            self.step = 5
+            if observation.quantity < 1:
                 return None
-
-            self.step += 1
-
-            return ToolCall(
-                name="create_cart",
-                arguments={},
-            )
+            return ToolCall("create_cart", {})
 
         if self.step == 5:
-            cart = observation
-            self.cart_id = cart.id
-
-            self.step += 1
-
+            self.step = 6
+            self.cart_id = observation.id
             return ToolCall(
-                name="add_to_cart",
-                arguments={
+                "add_to_cart",
+                {
                     "cart_id": self.cart_id,
                     "offer_id": self.offer_id,
                     "quantity": 1,
                 },
             )
 
+        # Cart creation is not the last safety boundary: offer and stock may
+        # have changed after the item was added.
         if self.step == 6:
-            self.step += 1
+            self.step = 7
+            return ToolCall("get_offer", {"offer_id": self.offer_id})
 
-            return ToolCall(
-                name="purchase",
-                arguments={"cart_id": self.cart_id},
-            )
+        if self.step == 7:
+            self.step = 8
+            if observation.price > self.max_price:
+                return None
+            return ToolCall("check_inventory", {"offer_id": self.offer_id})
+
+        if self.step == 8:
+            self.step = 9
+            if observation.quantity < 1:
+                return None
+            return ToolCall("purchase", {"cart_id": self.cart_id})
 
         return None
