@@ -32,6 +32,15 @@ uv run python -m examples.openai_benchmark
 
 The example is in [`examples/openai_benchmark.py`](examples/openai_benchmark.py). It prints a JSON report and can be adapted to use your own prompts, model, and agent.
 
+The [LangChain benchmark example](examples/langchain_benchmark.py) uses LangChain's `ChatOpenAI` and `bind_tools` APIs with the same versioned buying benchmark. AgentFault deliberately executes one tool call at a time, so the model's next decision sees the result and any state change introduced by the scenario. It requires an OpenAI API key and keeps all tool execution in the synthetic test world:
+
+```bash
+export OPENAI_API_KEY=...
+uv run --with "langchain-openai>=0.3,<2" python -m examples.langchain_benchmark
+```
+
+This is a LangChain chat-model adapter, not a wrapper around an arbitrary LangChain `AgentExecutor`; the AgentFault runner owns the tool loop to make stateful interventions deterministic.
+
 ## 2. Custom Scenario API
 
 **Use it to test a failure mode specific to your application.**
