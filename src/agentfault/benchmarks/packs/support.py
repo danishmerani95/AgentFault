@@ -3,6 +3,7 @@
 from agentfault.benchmarks import AgentFactory, BenchmarkCase, BenchmarkSuite
 from agentfault.testing import Scenario
 from agentfault.testing.assertion import Assertion
+from agentfault.testing.scenario import PerturbationSchedule
 from agentfault.testing.assertions import NoActionAttemptedAssertion
 from agentfault.testing.perturbations import SetAttribute
 from agentfault.testing.triggers import AfterTool
@@ -57,7 +58,7 @@ def _case(
     ]
     if forbid_refund_attempt:
         assertions.append(NoActionAttemptedAssertion("issue_refund"))
-    perturbations = (
+    perturbations: list[PerturbationSchedule] = (
         [
             (
                 AfterTool("check_account"),
