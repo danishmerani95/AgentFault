@@ -1,6 +1,7 @@
 """Offline tests for the Anthropic adapter and model-fault integration."""
 
 from collections.abc import Iterable
+from copy import deepcopy
 from types import SimpleNamespace
 from typing import Any
 
@@ -29,7 +30,7 @@ class FakeMessages:
         self.calls: list[dict[str, Any]] = []
 
     def create(self, **kwargs: Any) -> Any:
-        self.calls.append(kwargs)
+        self.calls.append(deepcopy(kwargs))
         if self.error is not None:
             raise self.error
         return self.responses.pop(0)
