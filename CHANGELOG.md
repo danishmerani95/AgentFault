@@ -7,6 +7,10 @@ This project is in alpha. Until the first release is tagged, changes are collect
 ## [Unreleased]
 
 ### Added
+- Scheduled tool and model API fault injection for transient failures, timeouts, latency, malformed/empty responses, and provider-like errors.
+- Repeated benchmark evaluation with per-case pass rates, pass^k, score means, population standard deviations, and explicit incomplete/error handling.
+- Native LangChain v1 middleware, sync/async LangGraph ToolNode interception, and an optional Anthropic Messages API agent adapter.
+- Timestamped scenario event timelines with monotonic duration measurements, fault/perturbation evidence, and per-case JSON trace serialization.
 - A versioned benchmark API with per-case results, assertion evidence, tool-call summaries, and scoring withheld for incomplete runs.
 - The `buying-agent@1.0.0` benchmark suite for safe purchases under price and inventory changes.
 - OpenAI and LangChain examples for the Benchmark API, plus a native LangGraph custom-scenario example.
