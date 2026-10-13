@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any, TypeAlias, TypeVar
 
 from agentfault.testing.triggers.model import ModelCallTrigger
@@ -196,6 +196,21 @@ class ModelCallExecutor:
                 fault.before_call(call_number)
 
         response = call()
+
+        for trigger, fault in self.schedules:
+            if trigger.phase == "after_model" and trigger.matches(call_number):
+                response = fault.after_call(call_number, response)
+        return response
+
+    async def execute_async(self, call: Callable[[], Awaitable[T]]) -> T:
+        """Apply the same scenario schedule around an asynchronous model call."""
+        self.call_count += 1
+        call_number = self.call_count
+        for trigger, fault in self.schedules:
+            if trigger.phase == "before_model" and trigger.matches(call_number):
+                fault.before_call(call_number)
+
+        response = await call()
 
         for trigger, fault in self.schedules:
             if trigger.phase == "after_model" and trigger.matches(call_number):

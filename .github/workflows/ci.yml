@@ -36,14 +36,17 @@ jobs:
       - name: Install project and development dependencies
         run: uv sync --locked --extra dev
 
+      - name: Install optional native LangChain integration for CI
+        run: uv pip install --python .venv/bin/python "langchain>=1.0,<2"
+
       - name: Run tests
-        run: uv run --locked pytest
+        run: uv run --no-sync pytest
 
       - name: Lint
-        run: uv run --locked ruff check .
+        run: uv run --no-sync ruff check .
 
       - name: Type-check
-        run: uv run --locked mypy src/agentfault
+        run: uv run --no-sync mypy src/agentfault
 
       - name: Build distributions
         run: uv build
