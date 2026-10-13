@@ -135,6 +135,11 @@ class BenchmarkResult:
                         if case.scenario_result is not None
                         else []
                     ),
+                    "events": (
+                        [event.to_dict() for event in case.scenario_result.events]
+                        if case.scenario_result is not None
+                        else []
+                    ),
                 }
                 for case in self.cases
             ],
