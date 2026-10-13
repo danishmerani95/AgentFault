@@ -65,6 +65,7 @@ def build_scenario() -> tuple[Scenario, LangGraphScenarioRunner]:
     tool_node = ToolNode(
         [lookup_account, issue_refund],
         wrap_tool_call=interceptor,
+        awrap_tool_call=interceptor.awrap_tool_call,
     )
 
     def scripted_agent(state: MessagesState) -> dict[str, list[AIMessage]]:
