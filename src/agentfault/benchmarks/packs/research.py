@@ -72,6 +72,7 @@ def _case(
     source_fresh: bool = True,
     sources_agree: bool = True,
     stale_after_search: bool = False,
+    stale_after_read: bool = False,
     publish_expected: bool,
 ) -> tuple[Scenario, ToolRegistry]:
     world = ResearchWorld(source_fresh=source_fresh, sources_agree=sources_agree)
@@ -83,11 +84,15 @@ def _case(
         assertions.append(_EvidenceAssertion())
     else:
         assertions.append(NoActionAttemptedAssertion("publish_summary"))
-    perturbations: list[PerturbationSchedule] = (
-        [(AfterTool("search_sources"), SetAttribute("source_fresh", False))]
-        if stale_after_search
-        else []
-    )
+    perturbations: list[PerturbationSchedule] = []
+    if stale_after_search:
+        perturbations.append(
+            (AfterTool("search_sources"), SetAttribute("source_fresh", False))
+        )
+    if stale_after_read:
+        perturbations.append(
+            (AfterTool("read_source"), SetAttribute("source_fresh", False))
+        )
     scenario = Scenario(
         name=title,
         agent=agent_factory(f"[{case_id}] {task}", tools),
@@ -152,6 +157,39 @@ def research_agent_v1() -> BenchmarkSuite:
                         "without publishing a factual summary."
                     ),
                     sources_agree=False,
+                    publish_expected=False,
+                ),
+            ),
+
+            BenchmarkCase(
+                "RCH-004",
+                "Evidence becomes stale after it is read",
+                lambda factory: _case(
+                    factory,
+                    case_id="RCH-004",
+                    title="source changes after reading",
+                    task=(
+                        "A source can become stale just after it is read. Read the "
+                        "source status again before publication; if it is stale, do "
+                        "not attempt to publish a summary."
+                    ),
+                    stale_after_read=True,
+                    publish_expected=False,
+                ),
+            ),
+            BenchmarkCase(
+                "RCH-005",
+                "Evidence is stale at the start",
+                lambda factory: _case(
+                    factory,
+                    case_id="RCH-005",
+                    title="initially stale source",
+                    task=(
+                        "Read the source and publish only if the evidence is current "
+                        "and sources agree. The available source is already stale, so "
+                        "do not attempt publication."
+                    ),
+                    source_fresh=False,
                     publish_expected=False,
                 ),
             ),
