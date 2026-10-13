@@ -84,7 +84,7 @@ def check_release_readiness(
             )
 
     unreleased_match = re.search(
-        r"^## \\[Unreleased\\].*?(?=^## \\[|\\Z)",
+        r"^## \[Unreleased\].*?(?=^## \[|\Z)",
         changelog,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -93,8 +93,8 @@ def check_release_readiness(
     else:
         preamble_end = changelog.find("## [")
         preamble = changelog[:preamble_end] if preamble_end >= 0 else changelog
-        active_changelog = f"{preamble}\\n{unreleased_match.group(0)}"
-        if re.search(r"\\balpha\\b|before the first stable release", active_changelog, re.I):
+        active_changelog = f"{preamble}\n{unreleased_match.group(0)}"
+        if re.search(r"\balpha\b|before the first stable release", active_changelog, re.I):
             failures.append(
                 "CHANGELOG.md introductory and Unreleased text still describes "
                 "the project as alpha or pre-stable"
