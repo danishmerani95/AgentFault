@@ -38,6 +38,60 @@ uv run python -m examples.openai_benchmark
 
 The tool implementations are still bound to Agent Fault's synthetic commerce environment. The model API call is external, but this example does not call real merchants, checkout, or payment services. The example scripts live in the Git repository and are not packaged into the installed PyPI wheel.
 
+## Native LangChain agents (v1 middleware)
+
+The chat-model adapter above is appropriate when Agent Fault owns the tool loop. For a LangChain v1 agent created with `langchain.agents.create_agent`, use the native middleware so the framework can keep ownership of the loop while Agent Fault observes model and tool calls.
+
+Install the optional framework dependency from a repository checkout:
+
+```bash
+uv sync --extra dev
+uv pip install "langchain>=1.0,<2"
+```
+
+A minimal shape for a custom scenario is:
+
+```python
+from langchain.agents import create_agent
+from langchain.tools import tool
+
+from agentfault.integrations.langchain import (
+    LangChainScenarioRunner,
+    LangChainToolCallInterceptor,
+)
+from agentfault.testing import Scenario
+
+world = {"account_status": "active"}
+
+@tool
+def lookup_account(account_id: str) -> str:
+    """Read the account from the isolated test world."""
+    return f"{account_id}:{world['account_status']}"
+
+middleware = LangChainToolCallInterceptor(
+    environment=world,
+    max_steps=20,
+)
+agent = create_agent(
+    model="openai:gpt-4o-mini",
+    tools=[lookup_account],
+    middleware=[middleware],
+)
+scenario = Scenario(
+    name="account lookup",
+    agent=agent,
+    environment=world,
+)
+result = LangChainScenarioRunner(scenario, middleware).run({
+    "messages": [{"role": "user", "content": "Look up test-account."}]
+})
+print(result.passed, result.error, result.trajectory)
+```
+
+To exercise a state change or tool fault, add the normal Agent Fault schedules to `Scenario.perturbations` or `Scenario.faults`; the runner configures them for each invocation. Model API fault schedules go in `Scenario.model_faults` and are injected at LangChain's native model-call boundary. The interceptor supports synchronous `invoke` and asynchronous `ainvoke` via `LangChainScenarioRunner.run` and `LangChainScenarioRunner.arun`.
+
+The middleware deliberately requires one tool call per model response. Parallel tool batches can make stateful perturbation ordering ambiguous, so the integration rejects them rather than imply deterministic coverage. When using a response-transform fault, tools should return `ToolMessage`; unsupported `Command` responses cannot be safely rewritten by the current adapter. Keep the LangChain tools bound to fake services, fixtures, or a disposable sandbox.
+
 ## LangChain chat models
 
 The [LangChain benchmark example](../examples/langchain_benchmark.py) uses `ChatOpenAI` and `bind_tools` to obtain one tool-call decision at a time. It translates that decision to Agent Fault's `Agent` contract; Agent Fault then executes the registered tool, records the result, applies scheduled perturbations, and passes the observation to the next model call.
