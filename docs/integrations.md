@@ -92,6 +92,53 @@ To exercise a state change or tool fault, add the normal Agent Fault schedules t
 
 The middleware deliberately requires one tool call per model response. Parallel tool batches can make stateful perturbation ordering ambiguous, so the integration rejects them rather than imply deterministic coverage. When using a response-transform fault, tools should return `ToolMessage`; unsupported `Command` responses cannot be safely rewritten by the current adapter. Keep the LangChain tools bound to fake services, fixtures, or a disposable sandbox.
 
+## Anthropic / Claude
+
+The optional `AnthropicAgent` adapts the Anthropic Messages API to AgentFault's generic `Agent` contract. Its actual `client.messages.create(...)` call is routed through `ModelCallExecutor`, so scenario-level model timeout, rate-limit, connection, latency, and response faults apply to the provider boundary. The package module does not import the Anthropic SDK at import time.
+
+Install the optional SDK and pass an Anthropic client:
+
+```bash
+uv sync --extra dev
+uv pip install "anthropic>=0.50,<1"
+export ANTHROPIC_API_KEY=...
+```
+
+```python
+import os
+
+from anthropic import Anthropic
+
+from agentfault.integrations.anthropic import AnthropicAgent
+from agentfault.testing import BeforeModelCall, ModelTimeoutFault, Scenario, ScenarioRunner
+from agentfault.tools import Tool, ToolRegistry
+
+world = {"documents": {"doc-test": "Synthetic test document"}}
+
+def read_document(document_id: str) -> str:
+    """Read only from the synthetic in-memory test world."""
+    return world["documents"].get(document_id, "not found")
+
+tools = [Tool("read_document", "Read a test document.", read_document)]
+agent = AnthropicAgent(
+    client=Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"]),
+    system_prompt="Use tools to answer safely; never invent document contents.",
+    user_prompt="Read document doc-test.",
+    tools=tools,
+    model="claude-sonnet-4-5",
+)
+scenario = Scenario(
+    name="Claude document lookup",
+    agent=agent,
+    environment=world,
+    model_faults=[(BeforeModelCall(1), ModelTimeoutFault())],
+)
+result = ScenarioRunner(ToolRegistry(tools)).run(scenario)
+print(result.passed, result.error, result.events)
+```
+
+The example fault above deliberately makes the first model request fail; remove `model_faults` when evaluating normal behavior. The adapter requests disabled parallel tool use and rejects any response containing more than one `tool_use` block, allowing each tool result and perturbation to be observed before Claude makes its next decision. The SDK dependency remains optional for applications that do not use Anthropic.
+
 ## LangChain chat models
 
 The [LangChain benchmark example](../examples/langchain_benchmark.py) uses `ChatOpenAI` and `bind_tools` to obtain one tool-call decision at a time. It translates that decision to Agent Fault's `Agent` contract; Agent Fault then executes the registered tool, records the result, applies scheduled perturbations, and passes the observation to the next model call.
