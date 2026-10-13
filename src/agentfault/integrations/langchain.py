@@ -15,7 +15,7 @@ from langchain_core.messages import ToolMessage
 
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
 from agentfault.testing.faults import ModelCallExecutor
-from agentfault.testing.perturbations import Perturbation, ToolFailurePerturbation
+from agentfault.testing.perturbations import ToolFailurePerturbation
 from agentfault.testing.scenario import (
     FaultSchedule,
     ModelFaultSchedule,
