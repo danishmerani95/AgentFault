@@ -170,7 +170,7 @@ def test_after_model_fault_can_simulate_empty_anthropic_response() -> None:
         [(AfterModelCall(1), EmptyModelResponseFault())]
     )
 
-    with pytest.raises(ValueError, match="tool_use"):
+    with pytest.raises(ValueError, match="content blocks"):
         agent.next_action(None)
 
     assert len(client.messages.calls) == 1
