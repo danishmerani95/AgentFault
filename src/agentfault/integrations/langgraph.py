@@ -14,7 +14,7 @@ from typing import Any
 
 from agentfault.observability import TraceRecorder
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
-from agentfault.testing.faults import ModelCallExecutor, ToolFault
+from agentfault.testing.faults import ModelCallExecutor
 from agentfault.testing.perturbations import Perturbation, ToolFailurePerturbation
 from agentfault.testing.scenario import FaultSchedule, Scenario
 from agentfault.testing.scenario_result import ScenarioResult
