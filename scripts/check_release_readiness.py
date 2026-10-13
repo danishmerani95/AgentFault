@@ -83,6 +83,23 @@ def check_release_readiness(
                 f"CHANGELOG.md release date {release_heading.group(1)!r} is invalid"
             )
 
+    unreleased_match = re.search(
+        r"^## \\[Unreleased\\].*?(?=^## \\[|\\Z)",
+        changelog,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if unreleased_match is None:
+        failures.append("CHANGELOG.md must retain an [Unreleased] section")
+    else:
+        preamble_end = changelog.find("## [")
+        preamble = changelog[:preamble_end] if preamble_end >= 0 else changelog
+        active_changelog = f"{preamble}\\n{unreleased_match.group(0)}"
+        if re.search(r"\\balpha\\b|before the first stable release", active_changelog, re.I):
+            failures.append(
+                "CHANGELOG.md introductory and Unreleased text still describes "
+                "the project as alpha or pre-stable"
+            )
+
     readme_path = root / "README.md"
     try:
         readme = readme_path.read_text(encoding="utf-8")
