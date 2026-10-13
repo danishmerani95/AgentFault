@@ -127,7 +127,12 @@ class AnthropicAgent(Agent):
             )
         )
 
-        content = list(getattr(response, "content", []))
+        if response is None or not hasattr(response, "content"):
+            raise ValueError("Anthropic response did not include any content blocks.")
+        raw_content = response.content
+        if not raw_content:
+            raise ValueError("Anthropic response did not include any content blocks.")
+        content = list(raw_content)
         tool_uses = [
             block
             for block in content
