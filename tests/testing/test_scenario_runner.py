@@ -470,3 +470,43 @@ def test_multiple_perturbations_apply_after_the_same_tool() -> None:
     assert result.trajectory[1].observation[0].price == 139.0
     assert world.offers["offer_sony_1"].price == 179.0
     assert world.inventories["offer_sony_1"].quantity == 0
+
+def test_scenario_result_records_ordered_timing_and_perturbation_events() -> None:
+    world = create_basic_world()
+    scenario = Scenario(
+        name="trace the offer lookup",
+        agent=DeterministicCommerceAgent(query="headphones", max_price=150.0),
+        environment=world,
+        perturbations=[
+            (
+                AfterTool("get_offers_for_product"),
+                ChangePrice(offer_id="offer_sony_1", new_price=179.0),
+            )
+        ],
+    )
+
+    result = ScenarioRunner(ToolRegistry(create_commerce_tools(world))).run(scenario)
+
+    assert result.events
+    assert result.events[0].kind == "scenario"
+    assert result.events[0].outcome == "started"
+    assert result.events[-1].kind == "scenario"
+    assert result.events[-1].outcome == "passed"
+    assert [event.sequence for event in result.events] == list(
+        range(1, len(result.events) + 1)
+    )
+    assert len({event.run_id for event in result.events}) == 1
+    assert any(event.kind == "perturbation" for event in result.events)
+
+    started_calls = [
+        event for event in result.events
+        if event.kind == "tool_call" and event.outcome == "started"
+    ]
+    completed_calls = [
+        event for event in result.events
+        if event.kind == "tool_call" and event.outcome in {"succeeded", "failed"}
+    ]
+    assert started_calls
+    assert len(started_calls) == len(completed_calls)
+    assert all(event.duration_ms is not None and event.duration_ms >= 0 for event in completed_calls)
+    assert all(event.timestamp.endswith("+00:00") for event in result.events)

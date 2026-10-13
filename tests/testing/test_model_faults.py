@@ -136,3 +136,28 @@ def test_model_fault_requires_agent_to_expose_call_executor() -> None:
     assert result.passed is False
     assert isinstance(result.error, RuntimeError)
     assert "ModelCallExecutor" in str(result.error)
+
+def test_scenario_trace_includes_model_fault_and_failed_call_events() -> None:
+    class ModelBackedAgent(Agent):
+        def __init__(self) -> None:
+            self.model_call_executor = ModelCallExecutor()
+
+        def next_action(self, observation: Any) -> ToolCall | None:
+            return self.model_call_executor.execute(lambda: None)
+
+    scenario = Scenario(
+        name="model timeout trace",
+        agent=ModelBackedAgent(),
+        environment={},
+        model_faults=[(BeforeModelCall(1), ModelTimeoutFault("injected timeout"))],
+    )
+    result = ScenarioRunner(ToolRegistry([])).run(scenario)
+
+    fault_events = [event for event in result.events if event.kind == "fault"]
+    model_events = [event for event in result.events if event.kind == "model_call"]
+    assert len(fault_events) == 1
+    assert fault_events[0].name == "ModelTimeoutFault"
+    assert fault_events[0].outcome == "injected"
+    assert [event.outcome for event in model_events] == ["started", "failed"]
+    assert model_events[-1].details["error_type"] == "TimeoutError"
+    assert result.events[-1].outcome == "error"

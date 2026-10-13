@@ -1,3 +1,4 @@
+from agentfault.observability import TraceEvent, TraceRecorder
 from agentfault.testing.assertion import Assertion, AssertionResult, EvaluationContext
 from agentfault.testing.perturbations import Perturbation
 from agentfault.testing.faults import (
@@ -51,6 +52,8 @@ __all__ = [
     "ScenarioRunner",
     "ScenarioResult",
     "ToolFault",
+    "TraceEvent",
+    "TraceRecorder",
     "ToolTimeoutFault",
     "TransientToolFailureFault",
     "TruncatedResponseFault",

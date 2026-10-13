@@ -4,6 +4,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeAlias, TypeVar
 
+from agentfault.observability import TraceRecorder
 from agentfault.testing.triggers.model import ModelCallTrigger
 
 T = TypeVar("T")
@@ -179,40 +180,147 @@ class ModelLatencyFault(_OneShotModelFault):
 class ModelCallExecutor:
     """Apply scheduled model-call faults around a real SDK/framework call."""
 
-    def __init__(self, schedules: list[ModelCallSchedule] | None = None) -> None:
+    def __init__(
+        self,
+        schedules: list[ModelCallSchedule] | None = None,
+        trace: TraceRecorder | None = None,
+    ) -> None:
         self.schedules = list(schedules or [])
         self.call_count = 0
+        self.trace = trace
 
-    def configure(self, schedules: list[ModelCallSchedule]) -> None:
+    def configure(
+        self,
+        schedules: list[ModelCallSchedule],
+        *,
+        trace: TraceRecorder | None = None,
+    ) -> None:
         """Set this scenario's schedules and reset the model-call counter."""
         self.schedules = list(schedules)
         self.call_count = 0
+        self.trace = trace
 
     def execute(self, call: Callable[[], T]) -> T:
         self.call_count += 1
         call_number = self.call_count
-        for trigger, fault in self.schedules:
-            if trigger.phase == "before_model" and trigger.matches(call_number):
-                fault.before_call(call_number)
+        call_id = f"model-{call_number}"
+        started = self.trace.now() if self.trace is not None else 0.0
+        if self.trace is not None:
+            self.trace.record(
+                kind="model_call",
+                phase="before_model",
+                name="model",
+                outcome="started",
+                call_id=call_id,
+                details={"call_number": call_number},
+            )
 
-        response = call()
-
-        for trigger, fault in self.schedules:
-            if trigger.phase == "after_model" and trigger.matches(call_number):
-                response = fault.after_call(call_number, response)
-        return response
+        try:
+            self._inject_before_faults(call_number, call_id)
+            response = call()
+            for trigger, fault in self.schedules:
+                if trigger.phase == "after_model" and trigger.matches(call_number):
+                    self._record_injected_fault(call_id, trigger.phase, fault)
+                    response = fault.after_call(call_number, response)
+            if self.trace is not None:
+                self.trace.record(
+                    kind="model_call",
+                    phase="after_model",
+                    name="model",
+                    outcome="succeeded",
+                    duration_ms=(
+                        (self.trace.now() - started) * 1000.0
+                        if self.trace is not None else None
+                    ),
+                    call_id=call_id,
+                    details={"call_number": call_number},
+                )
+            return response
+        except Exception as error:
+            if self.trace is not None:
+                self.trace.record(
+                    kind="model_call",
+                    phase="after_model",
+                    name="model",
+                    outcome="failed",
+                    duration_ms=(self.trace.now() - started) * 1000.0,
+                    call_id=call_id,
+                    details={
+                        "call_number": call_number,
+                        "error_type": type(error).__name__,
+                        "message": str(error) or type(error).__name__,
+                    },
+                )
+            raise
 
     async def execute_async(self, call: Callable[[], Awaitable[T]]) -> T:
         """Apply the same scenario schedule around an asynchronous model call."""
         self.call_count += 1
         call_number = self.call_count
+        call_id = f"model-{call_number}"
+        started = self.trace.now() if self.trace is not None else 0.0
+        if self.trace is not None:
+            self.trace.record(
+                kind="model_call",
+                phase="before_model",
+                name="model",
+                outcome="started",
+                call_id=call_id,
+                details={"call_number": call_number},
+            )
+
+        try:
+            self._inject_before_faults(call_number, call_id)
+            response = await call()
+            for trigger, fault in self.schedules:
+                if trigger.phase == "after_model" and trigger.matches(call_number):
+                    self._record_injected_fault(call_id, trigger.phase, fault)
+                    response = fault.after_call(call_number, response)
+            if self.trace is not None:
+                self.trace.record(
+                    kind="model_call",
+                    phase="after_model",
+                    name="model",
+                    outcome="succeeded",
+                    duration_ms=(self.trace.now() - started) * 1000.0,
+                    call_id=call_id,
+                    details={"call_number": call_number},
+                )
+            return response
+        except Exception as error:
+            if self.trace is not None:
+                self.trace.record(
+                    kind="model_call",
+                    phase="after_model",
+                    name="model",
+                    outcome="failed",
+                    duration_ms=(self.trace.now() - started) * 1000.0,
+                    call_id=call_id,
+                    details={
+                        "call_number": call_number,
+                        "error_type": type(error).__name__,
+                        "message": str(error) or type(error).__name__,
+                    },
+                )
+            raise
+
+    def _inject_before_faults(self, call_number: int, call_id: str) -> None:
         for trigger, fault in self.schedules:
             if trigger.phase == "before_model" and trigger.matches(call_number):
+                self._record_injected_fault(call_id, trigger.phase, fault)
                 fault.before_call(call_number)
 
-        response = await call()
-
-        for trigger, fault in self.schedules:
-            if trigger.phase == "after_model" and trigger.matches(call_number):
-                response = fault.after_call(call_number, response)
-        return response
+    def _record_injected_fault(
+        self,
+        call_id: str,
+        phase: str,
+        fault: ModelCallFault,
+    ) -> None:
+        if self.trace is not None:
+            self.trace.record(
+                kind="fault",
+                phase=phase,
+                name=type(fault).__name__,
+                outcome="injected",
+                call_id=call_id,
+            )

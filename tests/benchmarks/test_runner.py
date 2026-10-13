@@ -111,3 +111,19 @@ def test_suite_requires_unique_case_ids() -> None:
 def test_runner_rejects_invalid_step_limit() -> None:
     with pytest.raises(ValueError, match="at least 1"):
         BenchmarkRunner(max_steps=0)
+
+def test_benchmark_json_includes_each_scenarios_event_timeline() -> None:
+    result = BenchmarkRunner().run(
+        make_suite(),
+        agent_factory=lambda task, tools: NoOpAgent(),
+    )
+
+    first_case = result.to_dict()["cases"][0]
+    events = first_case["events"]
+
+    assert events
+    assert events[0]["kind"] == "scenario"
+    assert events[0]["outcome"] == "started"
+    assert events[-1]["kind"] == "scenario"
+    assert events[-1]["outcome"] == "passed"
+    assert events[0]["run_id"] == events[-1]["run_id"]

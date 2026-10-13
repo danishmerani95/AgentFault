@@ -181,3 +181,29 @@ def test_scenario_runner_reports_graph_errors_and_resets_evidence() -> None:
     assert isinstance(result.error, ValueError)
     assert str(result.error) == "graph failed"
     assert result.trajectory == []
+
+def test_langchain_middleware_records_tool_and_model_timeline_events() -> None:
+    interceptor = LangChainToolCallInterceptor(environment={})
+
+    interceptor.wrap_tool_call(
+        tool_request(),
+        lambda request: ToolMessage(
+            content="ok",
+            tool_call_id="call-1",
+            name="lookup",
+        ),
+    )
+    interceptor.wrap_model_call(
+        object(),
+        lambda request: SimpleNamespace(result=AIMessage(content="done")),
+    )
+
+    assert [(event.kind, event.outcome) for event in interceptor.trace.events] == [
+        ("tool_call", "started"),
+        ("tool_call", "succeeded"),
+        ("model_call", "started"),
+        ("model_call", "succeeded"),
+    ]
+    assert interceptor.trace.events[0].call_id == "call-1"
+    assert interceptor.trace.events[1].duration_ms is not None
+    assert interceptor.trace.events[-1].details["call_number"] == 1

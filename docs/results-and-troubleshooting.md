@@ -87,3 +87,26 @@ Check for hidden shared state, timestamps, random IDs, model variation, tool ord
 5. Only then adjust the agent, tools, perturbation timing, or assertion.
 
 The trajectory is evidence of what went through the configured execution path; it is not a complete trace of code that bypassed Agent Fault's hooks.
+
+## Execution event timeline
+
+Each `ScenarioResult` now includes `events`, an ordered list of `TraceEvent` values. Events cover scenario start/end, tool and model call start/completion, injected faults, and environment perturbations. Call-completion events include elapsed duration; model/tool events share a call ID when the framework provides one. Timestamps are UTC ISO-8601, and elapsed/duration fields use a monotonic clock.
+
+Inspect the timeline directly:
+
+```python
+result = ScenarioRunner(tool_registry).run(scenario)
+for event in result.events:
+    print(
+        event.sequence,
+        event.timestamp,
+        event.elapsed_ms,
+        event.kind,
+        event.phase,
+        event.name,
+        event.outcome,
+        event.duration_ms,
+    )
+```
+
+Benchmark `result.to_dict()` also includes each case's `events` list for JSON logs and report collection. Event details intentionally omit prompts, raw model responses, and tool arguments by default; add application-specific sanitized metadata in a separate layer if it is needed for diagnostics.
