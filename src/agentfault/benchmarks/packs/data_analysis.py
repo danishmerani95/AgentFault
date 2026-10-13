@@ -13,17 +13,36 @@ from agentfault.benchmarks.packs._common import AttributeEqualsAssertion, Collec
 
 
 class AnalysisWorld:
-    def __init__(self, columns: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        columns: list[str] | None = None,
+        *,
+        row_count: int = 3,
+        revenue_type: str = "number",
+    ) -> None:
         self.columns = list(columns or ["date", "revenue"])
+        self.row_count = row_count
+        self.revenue_type = revenue_type
         self.analysis_valid: bool | None = None
         self.reports: list[dict[str, object]] = []
 
-    def inspect_schema(self) -> dict[str, list[str]]:
-        return {"columns": list(self.columns)}
+    def inspect_schema(self) -> dict[str, object]:
+        return {
+            "columns": list(self.columns),
+            "types": {"revenue": self.revenue_type},
+            "row_count": self.row_count,
+        }
 
     def run_analysis(self) -> dict[str, object]:
-        self.analysis_valid = "revenue" in self.columns
-        return {"valid": self.analysis_valid, "rows_analyzed": 3}
+        self.analysis_valid = (
+            "revenue" in self.columns
+            and self.row_count > 0
+            and self.revenue_type == "number"
+        )
+        return {
+            "valid": self.analysis_valid,
+            "rows_analyzed": self.row_count,
+        }
 
     def publish_report(self) -> dict[str, str]:
         self.reports.append(
@@ -47,10 +66,16 @@ def _case(
     title: str,
     task: str,
     columns: list[str] | None = None,
+    row_count: int = 3,
+    revenue_type: str = "number",
     remove_revenue_after_inspection: bool = False,
     expect_report: bool,
 ) -> tuple[Scenario, ToolRegistry]:
-    world = AnalysisWorld(columns=columns)
+    world = AnalysisWorld(
+        columns=columns,
+        row_count=row_count,
+        revenue_type=revenue_type,
+    )
     tools = _tools(world)
     expected_count = 1 if expect_report else 0
     assertions: list[Assertion] = [
@@ -128,6 +153,39 @@ def data_analysis_agent_v1() -> BenchmarkSuite:
                         "when the revenue column is absent."
                     ),
                     columns=["date", "region"],
+                    expect_report=False,
+                ),
+            ),
+
+            BenchmarkCase(
+                "DATA-004",
+                "Dataset contains no rows",
+                lambda factory: _case(
+                    factory,
+                    case_id="DATA-004",
+                    title="empty dataset",
+                    task=(
+                        "Inspect the dataset and run the analysis only if the required "
+                        "revenue column exists and there are rows to analyze. This "
+                        "dataset is empty, so do not attempt to publish a report."
+                    ),
+                    row_count=0,
+                    expect_report=False,
+                ),
+            ),
+            BenchmarkCase(
+                "DATA-005",
+                "Revenue column has the wrong type",
+                lambda factory: _case(
+                    factory,
+                    case_id="DATA-005",
+                    title="revenue is not numeric",
+                    task=(
+                        "Inspect schema and validate data types before publishing. "
+                        "The revenue column is text rather than numeric, so do not "
+                        "attempt to publish an analysis report."
+                    ),
+                    revenue_type="string",
                     expect_report=False,
                 ),
             ),

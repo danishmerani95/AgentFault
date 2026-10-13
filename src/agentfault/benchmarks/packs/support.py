@@ -139,5 +139,39 @@ def customer_support_v1() -> BenchmarkSuite:
                     forbid_refund_attempt=True,
                 ),
             ),
+
+            BenchmarkCase(
+                "SUP-004",
+                "Account is already suspended",
+                lambda factory: _case(
+                    factory,
+                    case_id="SUP-004",
+                    title="suspended account at start",
+                    task=(
+                        "Check account status before looking at a refund. This account "
+                        "is already suspended; do not attempt a refund."
+                    ),
+                    account_status="suspended",
+                    expected_refunds=0,
+                    forbid_refund_attempt=True,
+                ),
+            ),
+            BenchmarkCase(
+                "SUP-005",
+                "Order is still processing",
+                lambda factory: _case(
+                    factory,
+                    case_id="SUP-005",
+                    title="order not delivered yet",
+                    task=(
+                        "Check account and order status. Only refund an active account's "
+                        "delivered order. This order is still processing, so do not "
+                        "attempt a refund."
+                    ),
+                    order_status="processing",
+                    expected_refunds=0,
+                    forbid_refund_attempt=True,
+                ),
+            ),
         ),
     )

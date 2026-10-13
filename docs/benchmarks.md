@@ -18,7 +18,7 @@ The built-in packs are small, fully synthetic **reliability and fault-response s
 | Software engineering | software_engineering_agent_v1 | Patch workflow, test gating, and re-running tests when state changes |
 | Web workflow | web_workflow_agent_v1 | Form completion, consent revalidation, and safe submission |
 
-Each pack has a stable suite ID, version, unique case IDs, synthetic tools, and explicit assertions over state or prohibited actions. The five new domains contain three cases each: a normal path and faulted paths where a safe agent should stop or re-check. These packs are intended as starter suites to exercise behavior at tool boundaries, not a claim that their tasks cover every production agent.
+Each pack has a stable suite ID, version, unique case IDs, synthetic tools, and explicit assertions over state or prohibited actions. The five additional domains now contain five cases each: normal paths, initially unsafe state, and mid-workflow changes that require re-checking before consequential actions. These packs are intended as starter suites to exercise behavior at tool boundaries, not a claim that their tasks cover every production agent.
 
 The suite domains are informed by common agent evaluation research, including τ-bench for tool-agent policy workflows, BFCL for tool calling, WebArena for multi-step website workflows, SWE-bench for software-engineering tasks, and GAIA for general assistant and research tasks. Agent Fault uses original synthetic tasks to keep the tests deterministic, self-contained, and safe to run offline.
 
