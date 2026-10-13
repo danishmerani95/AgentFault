@@ -1,4 +1,5 @@
 from agentfault.agent import Agent, DeterministicCommerceAgent
+from agentfault.observability import TraceEvent, TraceRecorder
 from agentfault.commerce import (
     Cart,
     CartItem,
@@ -49,6 +50,8 @@ __all__ = [
     "ToolExecutor",
     "ToolRegistry",
     "TrajectoryStep",
+    "TraceEvent",
+    "TraceRecorder",
     "Trigger",
     "create_commerce_tools",
 ]
