@@ -118,7 +118,27 @@ uv run --with "langgraph>=1.0,<2" python -m examples.langgraph_integration
 
 The example uses a real `StateGraph` and `ToolNode`, but a scripted decision node and a fake support backend; no model API key is required.
 
-**Current limitation in v0.1.0:** the native integration supports synchronous `invoke`, sequential tool calls routed through the configured `ToolNode`. Async execution, parallel ordering, and other tool execution paths are not supported yet. The native LangGraph runner is for custom scenarios; the first benchmark API expects an `Agent`-compatible factory.
+The integration now supports both sync and async graph execution when the ToolNode is configured with both hooks. Use `LangGraphScenarioRunner.run(...)` for `invoke` and `await LangGraphScenarioRunner.arun(...)` for `ainvoke`:
+
+```python
+tool_node = ToolNode(
+    tools,
+    wrap_tool_call=interceptor,
+    awrap_tool_call=interceptor.awrap_tool_call,
+)
+```
+
+For scenarios with model API faults, route the model node's actual call through the interceptor as well:
+
+```python
+# Sync model node:
+response = interceptor.invoke_model(lambda: model.invoke(messages))
+
+# Async model node:
+response = await interceptor.ainvoke_model(lambda: model.ainvoke(messages))
+```
+
+The model-call helper applies `Scenario.model_faults`, records model timing, and rejects a model response containing multiple tool calls. This is intentional: one batch of tool calls was selected before any result or state perturbation from that batch was visible, so the integration does not pretend state-dependent decisions were refreshed between parallel actions. Split consequential actions into separate model turns. Response-transform tool faults currently require a `ToolMessage`; `Command` responses are not rewritten. Tool interception only covers calls routed through the configured ToolNode, and model fault injection only covers model calls routed through the interceptor helper. The native LangGraph runner remains intended for custom scenarios; benchmark suites use the separate `Agent`-compatible factory API.
 
 ## Build another adapter
 
