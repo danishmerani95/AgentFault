@@ -10,7 +10,10 @@ def _write_release_fixture(
     *,
     version: str = "1.0.0",
     classifier: str = "Development Status :: 5 - Production/Stable",
-    changelog: str = "## [1.0.0] - 2026-10-13\n\nFirst stable release.\n",
+    changelog: str = (
+        "## [Unreleased]\n\nNext changes.\n\n"
+        "## [1.0.0] - 2026-10-13\n\nFirst stable release.\n"
+    ),
     readme: str = "# Agent Fault\n\n**Project status: stable.**\n",
 ) -> None:
     (root / "docs").mkdir(parents=True)
