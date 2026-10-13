@@ -9,21 +9,21 @@ langgraph_prebuilt = pytest.importorskip("langgraph.prebuilt")
 pytest.importorskip("langchain_core")
 pytest.importorskip("langgraph.graph")
 
-from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.tools import tool
-from langgraph.graph import END, START, MessagesState, StateGraph
+from langchain_core.messages import AIMessage, HumanMessage  # noqa: E402
+from langchain_core.tools import tool  # noqa: E402
+from langgraph.graph import END, START, MessagesState, StateGraph  # noqa: E402
 
-from agentfault.integrations.langgraph import (
+from agentfault.integrations.langgraph import (  # noqa: E402
     LangGraphScenarioRunner,
     LangGraphToolCallInterceptor,
 )
-from agentfault.testing import (
+from agentfault.testing import (  # noqa: E402
     BeforeModelCall,
     ModelTimeoutFault,
     Scenario,
     ToolTimeoutFault,
 )
-from agentfault.testing.triggers import BeforeTool
+from agentfault.testing.triggers import BeforeTool  # noqa: E402
 
 
 def tool_call_message(
