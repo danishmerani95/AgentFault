@@ -112,7 +112,8 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
 
         response = self._finish_tool_call(tool_call, response)
         self._record_tool_call_end(tool_call, response, started)
-        return response
+        if getattr(response, "status", None) != "error":
+            return response
 
     async def awrap_tool_call(
         self,
