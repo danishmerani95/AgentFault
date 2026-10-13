@@ -9,7 +9,7 @@ langgraph_prebuilt = pytest.importorskip("langgraph.prebuilt")
 pytest.importorskip("langchain_core")
 pytest.importorskip("langgraph.graph")
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
 from langgraph.graph import END, START, MessagesState, StateGraph
 
