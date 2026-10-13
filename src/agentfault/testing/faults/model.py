@@ -218,9 +218,9 @@ class ModelCallExecutor:
         try:
             self._inject_before_faults(call_number, call_id)
             response = call()
-            self._inject_after_faults(call_number, call_id, response)
             for trigger, fault in self.schedules:
                 if trigger.phase == "after_model" and trigger.matches(call_number):
+                    self._record_injected_fault(call_id, trigger.phase, fault)
                     response = fault.after_call(call_number, response)
             if self.trace is not None:
                 self.trace.record(
@@ -309,16 +309,6 @@ class ModelCallExecutor:
             if trigger.phase == "before_model" and trigger.matches(call_number):
                 self._record_injected_fault(call_id, trigger.phase, fault)
                 fault.before_call(call_number)
-
-    def _inject_after_faults(
-        self,
-        call_number: int,
-        call_id: str,
-        response: Any,
-    ) -> None:
-        # Keep this hook for uniform lifecycle evidence. The caller still assigns
-        # transformed results in both sync and async paths.
-        del call_number, call_id, response
 
     def _record_injected_fault(
         self,
