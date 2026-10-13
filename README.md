@@ -70,4 +70,6 @@ Use fake services, test fixtures, or an isolated sandbox—not live payment, pur
 - [Benchmarks](docs/benchmarks.md) — built-in suite, factories, and scoring
 - [Results and Troubleshooting](docs/results-and-troubleshooting.md) — trajectories, errors, and debugging
 - [Safety](docs/safety.md) — isolated test environments and execution boundaries
+- [API Stability](docs/api-stability.md) — compatibility and semantic-versioning policy for the first stable release
+- [Release Checklist](docs/releasing.md) — stable-release gates and publishing steps
 - [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)

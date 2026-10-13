@@ -81,6 +81,9 @@ jobs:
           print(f"Preparing {project['name']} {project['version']}")
           PY
 
+      - name: Check stable-release readiness when applicable
+        run: python scripts/check_release_readiness.py
+
       - name: Build source distribution and wheel
         run: uv build
 
