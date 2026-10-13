@@ -8,7 +8,7 @@ send the resulting observation back to Claude before its next decision.
 
 import json
 from dataclasses import asdict, is_dataclass
-from typing import Any
+from typing import Any, cast
 
 from agentfault.agent import Agent
 from agentfault.testing.faults import ModelCallExecutor
@@ -82,7 +82,7 @@ class AnthropicAgent(Agent):
         if isinstance(block, dict):
             return block
         if hasattr(block, "model_dump"):
-            return block.model_dump(exclude_none=True)
+            return cast(dict[str, Any], block.model_dump(exclude_none=True))
 
         result: dict[str, Any] = {}
         for key in ("type", "id", "name", "input", "text", "thinking", "signature"):
