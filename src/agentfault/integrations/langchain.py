@@ -13,6 +13,7 @@ from typing import Any
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import ToolMessage
 
+from agentfault.observability import TraceRecorder
 from agentfault.testing.assertion import AssertionResult, EvaluationContext
 from agentfault.testing.faults import ModelCallExecutor
 from agentfault.testing.perturbations import ToolFailurePerturbation
@@ -63,7 +64,11 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
         self.trajectory: list[TrajectoryStep] = []
         self.step_limit_reached = False
         self._pending_failures: list[ToolFailurePerturbation] = []
-        self.model_call_executor = ModelCallExecutor(list(model_faults or []))
+        self.trace = TraceRecorder()
+        self.model_call_executor = ModelCallExecutor(
+            list(model_faults or []),
+            trace=self.trace,
+        )
 
     def reset(self) -> None:
         """Clear tool evidence and queued failures before a new scenario run."""
@@ -79,19 +84,35 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
         """Synchronously intercept one LangChain tool execution."""
         tool_call = self._to_tool_call(request)
         self._check_step_limit()
+        started = self.trace.now()
+        self.trace.record(
+            kind="tool_call",
+            phase="before_tool",
+            name=tool_call.name,
+            outcome="started",
+            call_id=tool_call.id,
+        )
         self._apply_perturbations("before_tool", tool_call)
 
         pending_failure = self._take_pending_failure(tool_call)
         if pending_failure is not None:
-            return self._tool_error(tool_call, RuntimeError(pending_failure.message))
+            response = self._tool_error(
+                tool_call, RuntimeError(pending_failure.message)
+            )
+            self._record_tool_call_end(tool_call, response, started)
+            return response
 
         try:
             self._run_before_faults(tool_call)
             response = handler(request)
         except Exception as error:
-            return self._tool_error(tool_call, error)
+            response = self._tool_error(tool_call, error)
+            self._record_tool_call_end(tool_call, response, started)
+            return response
 
-        return self._finish_tool_call(tool_call, response)
+        response = self._finish_tool_call(tool_call, response)
+        self._record_tool_call_end(tool_call, response, started)
+        return response
 
     async def awrap_tool_call(
         self,
@@ -101,19 +122,35 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
         """Asynchronously intercept one LangChain tool execution."""
         tool_call = self._to_tool_call(request)
         self._check_step_limit()
+        started = self.trace.now()
+        self.trace.record(
+            kind="tool_call",
+            phase="before_tool",
+            name=tool_call.name,
+            outcome="started",
+            call_id=tool_call.id,
+        )
         self._apply_perturbations("before_tool", tool_call)
 
         pending_failure = self._take_pending_failure(tool_call)
         if pending_failure is not None:
-            return self._tool_error(tool_call, RuntimeError(pending_failure.message))
+            response = self._tool_error(
+                tool_call, RuntimeError(pending_failure.message)
+            )
+            self._record_tool_call_end(tool_call, response, started)
+            return response
 
         try:
             self._run_before_faults(tool_call)
             response = await handler(request)
         except Exception as error:
-            return self._tool_error(tool_call, error)
+            response = self._tool_error(tool_call, error)
+            self._record_tool_call_end(tool_call, response, started)
+            return response
 
-        return self._finish_tool_call(tool_call, response)
+        response = self._finish_tool_call(tool_call, response)
+        self._record_tool_call_end(tool_call, response, started)
+        return response
 
     def wrap_model_call(
         self,
@@ -169,6 +206,13 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
         for trigger, perturbation in self.perturbations:
             if trigger.phase != phase or not trigger.matches(tool_call):
                 continue
+            self.trace.record(
+                kind="perturbation",
+                phase=phase,
+                name=type(perturbation).__name__,
+                outcome="queued" if isinstance(perturbation, ToolFailurePerturbation) else "applied",
+                call_id=tool_call.id,
+            )
             if isinstance(perturbation, ToolFailurePerturbation):
                 self._pending_failures.append(perturbation)
             else:
@@ -186,6 +230,13 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
     def _run_before_faults(self, tool_call: ToolCall) -> None:
         for trigger, fault in self.faults:
             if trigger.phase == "before_tool" and trigger.matches(tool_call):
+                self.trace.record(
+                    kind="fault",
+                    phase="before_tool",
+                    name=type(fault).__name__,
+                    outcome="injected",
+                    call_id=tool_call.id,
+                )
                 fault.before_execute(tool_call)
 
     def _finish_tool_call(self, tool_call: ToolCall, response: Any) -> Any:
@@ -241,8 +292,38 @@ class LangChainToolCallInterceptor(AgentMiddleware[Any, Any, Any]):
     def _run_after_faults(self, tool_call: ToolCall, response: Any) -> Any:
         for trigger, fault in self.faults:
             if trigger.phase == "after_tool" and trigger.matches(tool_call):
+                self.trace.record(
+                    kind="fault",
+                    phase="after_tool",
+                    name=type(fault).__name__,
+                    outcome="injected",
+                    call_id=tool_call.id,
+                )
                 response = fault.after_execute(tool_call, response)
         return response
+
+    def _record_tool_call_end(
+        self,
+        tool_call: ToolCall,
+        response: Any,
+        started: float,
+    ) -> None:
+        is_error = getattr(response, "status", None) == "error"
+        self.trace.record(
+            kind="tool_call",
+            phase="after_tool",
+            name=tool_call.name,
+            outcome="failed" if is_error else "succeeded",
+            duration_ms=(self.trace.now() - started) * 1000.0,
+            call_id=tool_call.id,
+            details=(
+                {
+                    "error": str(getattr(response, "content", "")),
+                }
+                if is_error
+                else {}
+            ),
+        )
 
     def _tool_error(self, tool_call: ToolCall, error: Exception) -> ToolMessage:
         """Record a tool failure and make it observable to the agent for recovery."""
@@ -323,7 +404,17 @@ class LangChainScenarioRunner:
         self.interceptor.perturbations = list(self.scenario.perturbations)
         self.interceptor.faults = list(self.scenario.faults)
         self.interceptor.max_steps = self.max_steps
-        self.interceptor.model_call_executor.configure(self.scenario.model_faults)
+        self.interceptor.trace.reset()
+        self.interceptor.trace.record(
+            kind="scenario",
+            phase="run",
+            name=self.scenario.name,
+            outcome="started",
+        )
+        self.interceptor.model_call_executor.configure(
+            self.scenario.model_faults,
+            trace=self.interceptor.trace,
+        )
         self.interceptor.reset()
 
     def run(self, inputs: Any, config: Any | None = None) -> ScenarioResult:
@@ -371,9 +462,25 @@ class LangChainScenarioRunner:
         passed = terminal_error is None and all(
             result.passed for result in assertion_results
         )
+        outcome = (
+            "passed" if passed else "error" if terminal_error is not None else "failed"
+        )
+        self.interceptor.trace.record(
+            kind="scenario",
+            phase="run",
+            name=self.scenario.name,
+            outcome=outcome,
+            details={
+                "assertions_passed": sum(result.passed for result in assertion_results),
+                "assertions_total": len(assertion_results),
+                "error_type": type(terminal_error).__name__ if terminal_error else None,
+                "message": str(terminal_error) if terminal_error else None,
+            },
+        )
         return ScenarioResult(
             passed=passed,
             assertions=assertion_results,
             trajectory=list(self.interceptor.trajectory),
             error=terminal_error,
+            events=self.interceptor.trace.snapshot(),
         )
